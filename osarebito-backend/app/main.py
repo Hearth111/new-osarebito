@@ -34,3 +34,17 @@ def register(user: User):
     users.append(user.dict())
     save_users(users)
     return {"message": "registered"}
+
+
+class LoginInput(BaseModel):
+    user_id: str
+    password: str
+
+
+@app.post("/login")
+def login(data: LoginInput):
+    users = load_users()
+    for u in users:
+        if u["user_id"] == data.user_id and u["password"] == data.password:
+            return {"message": "logged in"}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
