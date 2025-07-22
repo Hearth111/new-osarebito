@@ -17,10 +17,12 @@ async function compressImage(file: File, ai: boolean): Promise<Blob> {
     reader.onerror = () => reject(new Error('file read'))
     reader.readAsDataURL(file)
   })
-  const img = new Image()
-  img.src = dataUrl
-  await new Promise((res) => {
-    img.onload = () => res(null)
+reader.readAsDataURL(file)
+　})
+　const img = new Image() as HTMLImageElement; // ★ ここを修正
+　img.src = dataUrl
+　await new Promise((res) => {
+　img.onload = () => res(null)
   })
   const canvas = document.createElement('canvas')
   canvas.width = img.width
