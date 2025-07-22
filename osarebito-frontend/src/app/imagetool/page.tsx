@@ -11,48 +11,61 @@ function rand(min: number, max: number) {
 }
 
 async function compressImage(file: File, ai: boolean): Promise<Blob> {
+  // Read the file as a Data URL
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result as string)
     reader.onerror = () => reject(new Error('file read'))
     reader.readAsDataURL(file)
   })
-reader.readAsDataURL(file)
-　})
-　const img = new Image() as HTMLImageElement; // ★ ここを修正
-　img.src = dataUrl
-　await new Promise((res) => {
-　img.onload = () => res(null)
+
+  // Create an Image object and wait for it to load
+  // Using 'as HTMLImageElement' to explicitly tell TypeScript the type,
+  // resolving the previous type error.
+  const img = new Image() as HTMLImageElement;
+  img.src = dataUrl
+  await new Promise((res) => {
+    img.onload = () => res(null)
   })
+
+  // Create a canvas and draw the image onto it
   const canvas = document.createElement('canvas')
   canvas.width = img.width
   canvas.height = img.height
-  const ctx = canvas.getContext('2d')!
+  const ctx = canvas.getContext('2d')! // Get the 2D rendering context
+
+  // Draw the image onto the canvas
   ctx.drawImage(img, 0, 0)
 
+  // Apply AI "protection" (noise) if the option is enabled
   if (ai) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const d = imageData.data
+    const d = imageData.data // Pixel data array (RGBA)
+    // Apply slight random variations to RGB channels
     for (let i = 0; i < d.length; i += 4) {
-      d[i] = clamp(d[i] + rand(-5, 5))
-      d[i + 1] = clamp(d[i + 1] + rand(-5, 5))
-      d[i + 2] = clamp(d[i + 2] + rand(-5, 5))
+      d[i] = clamp(d[i] + rand(-5, 5))     // Red channel
+      d[i + 1] = clamp(d[i + 1] + rand(-5, 5)) // Green channel
+      d[i + 2] = clamp(d[i + 2] + rand(-5, 5)) // Blue channel
     }
-    for (let i = 0; i < d.length; i += 40) {
-      const noise = rand(0, 255)
+    // Add larger random noise at intervals
+    for (let i = 0; i < d.length; i += 40) { // Every 10 pixels (40 bytes)
+      const noise = rand(0, 255) // Random grayscale noise
       d[i] = noise
       d[i + 1] = noise
       d[i + 2] = noise
     }
+    // Put the modified image data back onto the canvas
     ctx.putImageData(imageData, 0, 0)
   }
 
-  let quality = 0.92
+  // Compress the image to JPEG format, reducing quality if needed to meet size limit
+  let quality = 0.92 // Initial JPEG quality
   let blob = await new Promise<Blob>((resolve) =>
     canvas.toBlob((b) => resolve(b as Blob), 'image/jpeg', quality)
   )
+  // Loop to reduce quality until blob size is under 2MB or quality drops too low
   while (blob.size > 2 * 1024 * 1024 && quality > 0.3) {
-    quality -= 0.05
+    quality -= 0.05 // Decrease quality by 5%
     blob = await new Promise<Blob>((resolve) =>
       canvas.toBlob((b) => resolve(b as Blob), 'image/jpeg', quality)
     )
@@ -65,10 +78,11 @@ export default function ImageTool() {
   const [aiOption, setAiOption] = useState(false)
   const [resultUrl, setResultUrl] = useState('')
 
+  // Handler for processing the image
   const handleProcess = async () => {
-    if (!file) return
-    const blob = await compressImage(file, aiOption)
-    setResultUrl(URL.createObjectURL(blob))
+    if (!file) return // Do nothing if no file is selected
+    const blob = await compressImage(file, aiOption) // Call the compression function
+    setResultUrl(URL.createObjectURL(blob)) // Set the URL for the processed image
   }
 
   return (
@@ -88,25 +102,26 @@ export default function ImageTool() {
         AI対策
       </label>
       <button
-        className="bg-blue-500 text-white py-2 px-4"
+        className="bg-blue-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-600 transition-colors duration-200"
         onClick={handleProcess}
         disabled={!file}
       >
         変換
       </button>
       {resultUrl && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 p-4 border border-gray-200 rounded-md">
+          <h2 className="text-xl font-semibold">結果</h2>
           <Image
             src={resultUrl}
             alt="result"
             width={500}
             height={500}
-            className="max-w-full h-auto"
+            className="max-w-full h-auto rounded-md shadow-sm"
           />
           <a
             href={resultUrl}
             download="processed.jpg"
-            className="text-blue-500 underline"
+            className="text-blue-500 underline text-center hover:text-blue-700 transition-colors duration-200"
           >
             Download
           </a>
