@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function Login() {
   const [userId, setUserId] = useState('')
@@ -56,6 +57,11 @@ export default function Login() {
         </button>
       </form>
       {message && <p className="mt-4">{message}</p>}
+      <div className="mt-4">
+        <Link href="/signup" className="text-blue-500 underline">
+          Go to Sign Up
+        </Link>
+      </div>
     </div>
   )
 }
