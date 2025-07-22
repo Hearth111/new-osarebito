@@ -35,6 +35,11 @@ export default function Home() {
           </Link>
         </div>
       )}
+      <div className="mt-4">
+        <Link href="/imagetool" className="text-blue-500 underline">
+          画像圧縮ツール
+        </Link>
+      </div>
     </div>
   )
 }
