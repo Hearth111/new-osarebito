@@ -8,22 +8,35 @@ export default function SignUp() {
   const [userId, setUserId] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [role, setRole] = useState('')
   const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!role) {
+      setMessage('Please select a role')
+      return
+    }
+    if (password !== confirmPassword) {
+      setMessage('Passwords do not match')
+      return
+    }
     try {
       const res = await axios.post('/api/register', {
         email,
         user_id: userId,
         username,
         password,
+        role,
       })
       setMessage(res.data.message)
       setEmail('')
       setUserId('')
       setUsername('')
       setPassword('')
+      setConfirmPassword('')
+      setRole('')
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const anyErr = err as { response?: { data?: { detail?: string } } }
@@ -70,6 +83,29 @@ export default function SignUp() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <input
+          className="border p-2"
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+        <div className="flex gap-4">
+          {[
+            { key: '推され人', label: '推され人' },
+            { key: '推し人', label: '推し人' },
+            { key: 'お仕事人', label: 'お仕事人' },
+          ].map((r) => (
+            <div
+              key={r.key}
+              className={`flex-1 border p-4 cursor-pointer rounded ${role === r.key ? 'bg-blue-100 border-blue-500' : ''}`}
+              onClick={() => setRole(r.key)}
+            >
+              {r.label}
+            </div>
+          ))}
+        </div>
         <button className="bg-blue-500 text-white py-2" type="submit">
           Register
         </button>

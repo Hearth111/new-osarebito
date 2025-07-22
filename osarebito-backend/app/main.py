@@ -7,11 +7,15 @@ app = FastAPI()
 
 DATA_FILE = Path(__file__).resolve().parent / "users.json"
 
+ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
+
+
 class User(BaseModel):
     email: EmailStr
     user_id: str
     username: str
     password: str
+    role: str
 
 
 def load_users():
@@ -28,6 +32,8 @@ def save_users(users):
 
 @app.post("/register")
 def register(user: User):
+    if user.role not in ALLOWED_ROLES:
+        raise HTTPException(status_code=400, detail="Invalid role")
     users = load_users()
     if any(u["user_id"] == user.user_id for u in users):
         raise HTTPException(status_code=400, detail="User ID already exists")
