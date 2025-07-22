@@ -19,10 +19,10 @@ async function compressImage(file: File, ai: boolean): Promise<Blob> {
     reader.readAsDataURL(file)
   })
 
-  // Create an Image object and wait for it to load
-  // Using 'as HTMLImageElement' to explicitly tell TypeScript the type,
-  // resolving the previous type error.
-  const img = new Image() as HTMLImageElement;
+  // Create an Image element using document.createElement
+  // This approach is often more robust against strict TypeScript configurations
+  // when dealing with global constructors like Image.
+  const img = document.createElement('img');
   img.src = dataUrl
   await new Promise((res) => {
     img.onload = () => res(null)
