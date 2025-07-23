@@ -25,6 +25,23 @@ export default async function Profile({ params }: any) {
       )}
       {profile.bio && <p className="mt-2">{profile.bio}</p>}
       {profile.activity && <p className="mt-2">{profile.activity}</p>}
+      {profile.sns_links && (
+        <div className="mt-2 flex flex-col gap-1">
+          {profile.sns_links.youtube && (
+            <a href={profile.sns_links.youtube} className="text-blue-500 underline">
+              YouTube
+            </a>
+          )}
+          {profile.sns_links.twitter && (
+            <a href={profile.sns_links.twitter} className="text-blue-500 underline">
+              Twitter
+            </a>
+          )}
+        </div>
+      )}
+      {profile.visibility && (
+        <p className="mt-2 text-sm text-gray-600">公開範囲: {profile.visibility}</p>
+      )}
     </div>
   )
 }
