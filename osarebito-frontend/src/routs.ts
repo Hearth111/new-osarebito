@@ -6,5 +6,9 @@ export const getCollabProfileUrl = (userId: string) => `${BACKEND_URL}/users/${u
 export const updateCollabProfileUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/collab_profile`
 export const followUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/follow`
 export const unfollowUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/unfollow`
+export const interestUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/interest`
+export const uninterestUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/uninterest`
+export const mutualFollowersUrl = (userId: string, myId: string) =>
+  `${BACKEND_URL}/users/${userId}/mutual_followers?my_id=${myId}`
 export const followersUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/followers`
 export const followingUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/following`

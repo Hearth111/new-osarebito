@@ -43,6 +43,7 @@ def register(user: User):
         "collab_profile": {},
         "followers": [],
         "following": [],
+        "interested": [],
     })
     save_users(users)
     return {"message": "registered"}
@@ -110,6 +111,9 @@ def get_user(user_id: str):
 class FollowRequest(BaseModel):
     follower_id: str
 
+class InterestRequest(BaseModel):
+    user_id: str
+
 
 @app.post("/users/{target_id}/follow")
 def follow_user(target_id: str, data: FollowRequest):
@@ -145,6 +149,47 @@ def unfollow_user(target_id: str, data: FollowRequest):
         following.remove(target_id)
     save_users(users)
     return {"message": "unfollowed"}
+
+
+@app.post("/users/{target_id}/interest")
+def add_interest(target_id: str, data: InterestRequest):
+    if target_id == data.user_id:
+        raise HTTPException(status_code=400, detail="Cannot interest yourself")
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == target_id), None)
+    requester = next((u for u in users if u["user_id"] == data.user_id), None)
+    if not target or not requester:
+        raise HTTPException(status_code=404, detail="User not found")
+    lst = target.setdefault("interested", [])
+    if data.user_id not in lst:
+        lst.append(data.user_id)
+        save_users(users)
+    return {"message": "interested"}
+
+
+@app.post("/users/{target_id}/uninterest")
+def remove_interest(target_id: str, data: InterestRequest):
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == target_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    lst = target.setdefault("interested", [])
+    if data.user_id in lst:
+        lst.remove(data.user_id)
+        save_users(users)
+    return {"message": "uninterested"}
+
+
+@app.get("/users/{user_id}/mutual_followers")
+def mutual_followers(user_id: str, my_id: str):
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == user_id), None)
+    me = next((u for u in users if u["user_id"] == my_id), None)
+    if not target or not me:
+        raise HTTPException(status_code=404, detail="User not found")
+    mutual = set(target.get("followers", [])) & set(me.get("following", []))
+    result = [remove_password(u) for u in users if u["user_id"] in mutual]
+    return result
 
 
 @app.get("/users/{user_id}/followers")
