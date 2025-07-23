@@ -2,6 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getUserUrl } from '../../../routs'
 import FollowButton from '../../../components/FollowButton'
+import InterestButton from '../../../components/InterestButton'
+import MutualLink from '../../../components/MutualLink'
 
 async function getUser(userId: string) {
   const res = await fetch(getUserUrl(userId), { cache: 'no-store' })
@@ -19,19 +21,22 @@ export default async function Profile({ params }: any) {
   const profile = user.profile || {}
   const followerCount = Array.isArray(user.followers) ? user.followers.length : 0
   const followingCount = Array.isArray(user.following) ? user.following.length : 0
+  const interested = Array.isArray(user.interested) ? user.interested : []
   return (
     <div className="max-w-md mx-auto mt-10 flex flex-col gap-2">
       <h1 className="text-2xl font-bold mb-4">プロフィール</h1>
       <p>User ID: {user.user_id}</p>
       <p>Username: {user.username}</p>
-      <div className="flex gap-4 mt-1">
+      <div className="flex gap-4 mt-1 flex-wrap">
         <Link href={`/profile/${params.userId}/followers`} className="underline">
           フォロワー {followerCount}
         </Link>
         <Link href={`/profile/${params.userId}/following`} className="underline">
           フォロー {followingCount}
         </Link>
+        <MutualLink targetId={params.userId} />
         <FollowButton targetId={params.userId} followers={user.followers || []} />
+        <InterestButton targetId={params.userId} interested={interested} />
       </div>
       {profile.profile_image && (
         <Image src={profile.profile_image} alt="profile" width={200} height={200} className="mt-2" />
