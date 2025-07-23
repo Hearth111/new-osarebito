@@ -1,24 +1,46 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(
-  req: NextRequest,
-  // 修正点: 第2引数を context オブジェクトとして受け取り、その中の params を使用します。
-  // Next.jsのRoute Handlersでは、動的セグメント（[userId]など）はcontext.paramsで提供されます。
-  context: { params: { userId: string } } 
+  request: NextRequest,
+  context: { params: { userId: string } }
 ) {
   try {
-    // context.params から userId を取得します。
-    const userId = context.params.userId; 
-    const data = await req.json()
-    const res = await fetch(`http://localhost:8000/users/${userId}/profile`, { // 修正点: params.userId を userId に変更
+    // context オブジェクトから動的な :userId を取得します
+    const { userId } = context.params;
+
+    // バックエンドAPIのURLを環境変数から取得します
+    const backendApiUrl = process.env.BACKEND_API_URL;
+    if (!backendApiUrl) {
+      throw new Error("BACKEND_API_URL is not defined in environment variables.");
+    }
+
+    // リクエストボディを取得します
+    const data = await request.json();
+
+    // バックエンドAPIへリクエストを転送します
+    const apiResponse = await fetch(`${backendApiUrl}/users/${userId}/profile`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
-    })
-    const body = await res.json()
-    return NextResponse.json(body, { status: res.status })
-  } catch (error) { // 修正点: エラーオブジェクトをキャッチし、ログに出力することも検討
-    console.error("Error in PUT /api/users/[userId]/profile:", error); // エラーログを追加
-    return NextResponse.json({ detail: 'Server error' }, { status: 500 })
+    });
+
+    // バックエンドからのレスポンスがエラーの場合、その内容をクライアントに返します
+    if (!apiResponse.ok) {
+        const errorBody = await apiResponse.json();
+        return NextResponse.json(errorBody, { status: apiResponse.status });
+    }
+
+    const responseBody = await apiResponse.json();
+    return NextResponse.json(responseBody, { status: apiResponse.status });
+
+  } catch (error) {
+    // 予期せぬエラーが発生した場合の処理
+    console.error("Error in PUT /api/users/[userId]/profile:", error);
+    return NextResponse.json(
+      { detail: "An unexpected server error occurred." },
+      { status: 500 }
+    );
   }
 }
