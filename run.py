@@ -10,6 +10,7 @@ BACKEND_UVICORN = BACKEND_DIR / "venv" / "bin" / "uvicorn"
 
 
 def run_frontend():
+    subprocess.run(["npm", "install"], cwd=FRONTEND_DIR)
     subprocess.run(["npm", "run", "dev"], cwd=FRONTEND_DIR)
 
 
@@ -22,6 +23,7 @@ def run_backend():
 
 
 def run_both():
+    subprocess.run(["npm", "install"], cwd=FRONTEND_DIR)
     front_proc = subprocess.Popen(["npm", "run", "dev"], cwd=FRONTEND_DIR)
     if BACKEND_UVICORN.exists():
         back_cmd = [str(BACKEND_UVICORN), "app.main:app", "--reload"]
