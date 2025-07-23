@@ -37,7 +37,7 @@ def register(user: User):
     users = load_users()
     if any(u["user_id"] == user.user_id for u in users):
         raise HTTPException(status_code=400, detail="User ID already exists")
-    users.append({**user.dict(), "profile": {}})
+    users.append({**user.dict(), "profile": {}, "collab_profile": {}})
     save_users(users)
     return {"message": "registered"}
 
@@ -69,6 +69,20 @@ class ProfileUpdate(BaseModel):
     bio: str | None = None
     activity: str | None = None
     sns_links: dict | None = None
+    visibility: str | None = None
+
+
+class CollabProfile(BaseModel):
+    interests: str | None = None
+    looking_for: str | None = None
+    availability: str | None = None
+    visibility: str = "private"
+
+
+class CollabProfileUpdate(BaseModel):
+    interests: str | None = None
+    looking_for: str | None = None
+    availability: str | None = None
     visibility: str | None = None
 
 
@@ -104,6 +118,29 @@ def update_profile(user_id: str, profile: ProfileUpdate):
             data = profile.dict(exclude_unset=True)
             prof.update({k: v for k, v in data.items() if v is not None})
             u["profile"] = prof
+            save_users(users)
+            return {"message": "updated"}
+    raise HTTPException(status_code=404, detail="User not found")
+
+
+@app.get("/users/{user_id}/collab_profile")
+def get_collab_profile(user_id: str):
+    users = load_users()
+    for u in users:
+        if u["user_id"] == user_id:
+            return u.get("collab_profile", {})
+    raise HTTPException(status_code=404, detail="User not found")
+
+
+@app.put("/users/{user_id}/collab_profile")
+def update_collab_profile(user_id: str, profile: CollabProfileUpdate):
+    users = load_users()
+    for u in users:
+        if u["user_id"] == user_id:
+            prof = u.get("collab_profile", {})
+            data = profile.dict(exclude_unset=True)
+            prof.update({k: v for k, v in data.items() if v is not None})
+            u["collab_profile"] = prof
             save_users(users)
             return {"message": "updated"}
     raise HTTPException(status_code=404, detail="User not found")

@@ -61,6 +61,11 @@ export default function Home() {
               プロフィール設定
             </Link>
           </div>
+          <div className="mt-2">
+            <Link href="/profile/collab-settings" className="text-blue-500 underline">
+              コラボ用プロフィール設定
+            </Link>
+          </div>
         </>
       )}
     </div>
