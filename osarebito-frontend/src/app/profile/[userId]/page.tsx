@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { getUserUrl } from '../../../routs'
 
 async function getUser(userId: string) {
@@ -42,6 +43,11 @@ export default async function Profile({ params }: any) {
       {profile.visibility && (
         <p className="mt-2 text-sm text-gray-600">公開範囲: {profile.visibility}</p>
       )}
+      <div className="mt-2">
+        <Link href={`/profile/${params.userId}/collab`} className="text-blue-500 underline">
+          コラボ用プロフィールを見る
+        </Link>
+      </div>
     </div>
   )
 }
