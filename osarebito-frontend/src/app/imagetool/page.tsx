@@ -47,13 +47,12 @@ async function compressImage(file: File, ai: boolean): Promise<Blob> {
       d[i + 1] = clamp(d[i + 1] + rand(-5, 5)) // Green channel
       d[i + 2] = clamp(d[i + 2] + rand(-5, 5)) // Blue channel
     }
-    // Add larger random noise at intervals with some transparency
-    const dotOpacity = 0.3 // 0 = transparent, 1 = opaque
+    // Add larger random noise at intervals
     for (let i = 0; i < d.length; i += 40) { // Every 10 pixels (40 bytes)
       const noise = rand(0, 255) // Random grayscale noise
-      d[i] = clamp(d[i] * (1 - dotOpacity) + noise * dotOpacity)
-      d[i + 1] = clamp(d[i + 1] * (1 - dotOpacity) + noise * dotOpacity)
-      d[i + 2] = clamp(d[i + 2] * (1 - dotOpacity) + noise * dotOpacity)
+      d[i] = noise
+      d[i + 1] = noise
+      d[i + 2] = noise
     }
     // Put the modified image data back onto the canvas
     ctx.putImageData(imageData, 0, 0)
