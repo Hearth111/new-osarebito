@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { getUserUrl } from '../../../routs'
+import FollowButton from '../../../components/FollowButton'
 
 async function getUser(userId: string) {
   const res = await fetch(getUserUrl(userId), { cache: 'no-store' })
@@ -16,11 +17,22 @@ export default async function Profile({ params }: any) {
     return <div className="max-w-md mx-auto mt-10">ユーザーが見つかりません</div>
   }
   const profile = user.profile || {}
+  const followerCount = Array.isArray(user.followers) ? user.followers.length : 0
+  const followingCount = Array.isArray(user.following) ? user.following.length : 0
   return (
     <div className="max-w-md mx-auto mt-10 flex flex-col gap-2">
       <h1 className="text-2xl font-bold mb-4">プロフィール</h1>
       <p>User ID: {user.user_id}</p>
       <p>Username: {user.username}</p>
+      <div className="flex gap-4 mt-1">
+        <Link href={`/profile/${params.userId}/followers`} className="underline">
+          フォロワー {followerCount}
+        </Link>
+        <Link href={`/profile/${params.userId}/following`} className="underline">
+          フォロー {followingCount}
+        </Link>
+        <FollowButton targetId={params.userId} followers={user.followers || []} />
+      </div>
       {profile.profile_image && (
         <Image src={profile.profile_image} alt="profile" width={200} height={200} className="mt-2" />
       )}
