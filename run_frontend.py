@@ -16,6 +16,11 @@ def main() -> None:
         sys.stderr.write("npm was not found. Please install Node.js and ensure npm is available in PATH.\n")
         sys.exit(1)
 
+    # Install dependencies if node_modules is missing
+    node_modules = FRONTEND_DIR / "node_modules"
+    if not node_modules.exists():
+        subprocess.run([npm, "install"], cwd=FRONTEND_DIR, check=True)
+
     subprocess.run([npm, "run", "dev"], cwd=FRONTEND_DIR)
 
 
