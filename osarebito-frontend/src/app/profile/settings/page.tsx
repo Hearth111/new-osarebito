@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { getUserUrl } from '../../../routs'
 import { useRouter } from 'next/navigation'
 
 export default function ProfileSettings() {
@@ -17,7 +16,7 @@ export default function ProfileSettings() {
   useEffect(() => {
     const userId = localStorage.getItem('userId') || ''
     if (!userId) return
-    fetch(getUserUrl(userId), { cache: 'no-store' })
+    fetch(`/api/users/${userId}`, { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.profile) {
