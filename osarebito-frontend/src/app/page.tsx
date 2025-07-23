@@ -4,14 +4,18 @@ import Link from 'next/link'
 
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false)
+  const [userId, setUserId] = useState('')
 
   useEffect(() => {
     setLoggedIn(localStorage.getItem('loggedIn') === 'true')
+    setUserId(localStorage.getItem('userId') || '')
   }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('loggedIn')
+    localStorage.removeItem('userId')
     setLoggedIn(false)
+    setUserId('')
   }
 
   return (
@@ -40,6 +44,25 @@ export default function Home() {
           画像圧縮ツール
         </Link>
       </div>
+      <div className="mt-2">
+        <Link href="/profile/search" className="text-blue-500 underline">
+          ユーザー検索
+        </Link>
+      </div>
+      {loggedIn && (
+        <>
+          <div className="mt-2">
+            <Link href={`/profile/${userId}`} className="text-blue-500 underline">
+              プロフィール
+            </Link>
+          </div>
+          <div className="mt-2">
+            <Link href="/profile/settings" className="text-blue-500 underline">
+              プロフィール設定
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   )
 }
