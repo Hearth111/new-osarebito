@@ -58,7 +58,15 @@ export default function Home() {
           </div>
           <div className="mt-2">
             <Link href="/profile/settings" className="text-pink-500 underline">
-              プロフィール設定
+              プロフィール編集
+            </Link>
+          </div>
+          <div className="mt-2">
+            <Link
+              href={`/profile/${userId}/collab`}
+              className="text-pink-500 underline"
+            >
+              コラボプロフィール
             </Link>
           </div>
           <div className="mt-2">
