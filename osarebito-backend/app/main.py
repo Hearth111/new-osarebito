@@ -37,7 +37,13 @@ def register(user: User):
     users = load_users()
     if any(u["user_id"] == user.user_id for u in users):
         raise HTTPException(status_code=400, detail="User ID already exists")
-    users.append({**user.dict(), "profile": {}, "collab_profile": {}})
+    users.append({
+        **user.dict(),
+        "profile": {},
+        "collab_profile": {},
+        "followers": [],
+        "following": [],
+    })
     save_users(users)
     return {"message": "registered"}
 
@@ -99,6 +105,68 @@ def get_user(user_id: str):
         if u["user_id"] == user_id:
             return remove_password(u)
     raise HTTPException(status_code=404, detail="User not found")
+
+
+class FollowRequest(BaseModel):
+    follower_id: str
+
+
+@app.post("/users/{target_id}/follow")
+def follow_user(target_id: str, data: FollowRequest):
+    if target_id == data.follower_id:
+        raise HTTPException(status_code=400, detail="Cannot follow yourself")
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == target_id), None)
+    follower = next((u for u in users if u["user_id"] == data.follower_id), None)
+    if not target or not follower:
+        raise HTTPException(status_code=404, detail="User not found")
+    followers = target.setdefault("followers", [])
+    following = follower.setdefault("following", [])
+    if data.follower_id not in followers:
+        followers.append(data.follower_id)
+    if target_id not in following:
+        following.append(target_id)
+    save_users(users)
+    return {"message": "followed"}
+
+
+@app.post("/users/{target_id}/unfollow")
+def unfollow_user(target_id: str, data: FollowRequest):
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == target_id), None)
+    follower = next((u for u in users if u["user_id"] == data.follower_id), None)
+    if not target or not follower:
+        raise HTTPException(status_code=404, detail="User not found")
+    followers = target.setdefault("followers", [])
+    following = follower.setdefault("following", [])
+    if data.follower_id in followers:
+        followers.remove(data.follower_id)
+    if target_id in following:
+        following.remove(target_id)
+    save_users(users)
+    return {"message": "unfollowed"}
+
+
+@app.get("/users/{user_id}/followers")
+def list_followers(user_id: str):
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == user_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    follower_ids = target.get("followers", [])
+    result = [remove_password(u) for u in users if u["user_id"] in follower_ids]
+    return result
+
+
+@app.get("/users/{user_id}/following")
+def list_following(user_id: str):
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == user_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    following_ids = target.get("following", [])
+    result = [remove_password(u) for u in users if u["user_id"] in following_ids]
+    return result
 
 
 @app.get("/users/search")
