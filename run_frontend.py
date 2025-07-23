@@ -21,7 +21,9 @@ def main() -> None:
     if not node_modules.exists():
         subprocess.run([npm, "install"], cwd=FRONTEND_DIR, check=True)
 
-    subprocess.run([npm, "run", "dev"], cwd=FRONTEND_DIR)
+    env = os.environ.copy()
+    env.setdefault("PORT", os.environ.get("FRONTEND_PORT", "3000"))
+    subprocess.run([npm, "run", "dev"], cwd=FRONTEND_DIR, env=env)
 
 
 if __name__ == "__main__":
