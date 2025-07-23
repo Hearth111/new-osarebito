@@ -84,7 +84,7 @@ export default function CollabProfileSettings() {
           <option value="private">非公開</option>
           <option value="public">公開</option>
         </select>
-        <button className="bg-blue-500 text-white py-2" type="submit">
+        <button className="bg-pink-500 text-white py-2" type="submit">
           保存
         </button>
       </form>

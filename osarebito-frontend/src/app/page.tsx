@@ -25,7 +25,7 @@ export default function Home() {
         <div>
           <p>You are logged in.</p>
           <button
-            className="bg-blue-500 text-white py-2 px-4 mt-4"
+            className="bg-pink-500 text-white py-2 px-4 mt-4"
             onClick={handleLogout}
           >
             Logout
@@ -34,35 +34,35 @@ export default function Home() {
       ) : (
         <div>
           <p>You are not logged in.</p>
-          <Link href="/login" className="text-blue-500 underline">
+          <Link href="/login" className="text-pink-500 underline">
             Login
           </Link>
         </div>
       )}
       <div className="mt-4">
-        <Link href="/imagetool" className="text-blue-500 underline">
+        <Link href="/imagetool" className="text-pink-500 underline">
           画像圧縮ツール
         </Link>
       </div>
       <div className="mt-2">
-        <Link href="/profile/search" className="text-blue-500 underline">
+        <Link href="/profile/search" className="text-pink-500 underline">
           ユーザー検索
         </Link>
       </div>
       {loggedIn && (
         <>
           <div className="mt-2">
-            <Link href={`/profile/${userId}`} className="text-blue-500 underline">
+            <Link href={`/profile/${userId}`} className="text-pink-500 underline">
               プロフィール
             </Link>
           </div>
           <div className="mt-2">
-            <Link href="/profile/settings" className="text-blue-500 underline">
+            <Link href="/profile/settings" className="text-pink-500 underline">
               プロフィール設定
             </Link>
           </div>
           <div className="mt-2">
-            <Link href="/profile/collab-settings" className="text-blue-500 underline">
+            <Link href="/profile/collab-settings" className="text-pink-500 underline">
               コラボ用プロフィール設定
             </Link>
           </div>

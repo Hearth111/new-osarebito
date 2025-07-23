@@ -102,7 +102,7 @@ export default function ImageTool() {
         AI対策
       </label>
       <button
-        className="bg-blue-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-600 transition-colors duration-200"
+        className="bg-pink-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-pink-600 transition-colors duration-200"
         onClick={handleProcess}
         disabled={!file}
       >
@@ -121,7 +121,7 @@ export default function ImageTool() {
           <a
             href={resultUrl}
             download="processed.jpg"
-            className="text-blue-500 underline text-center hover:text-blue-700 transition-colors duration-200"
+            className="text-pink-500 underline text-center hover:text-pink-700 transition-colors duration-200"
           >
             Download
           </a>

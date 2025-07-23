@@ -29,12 +29,12 @@ export default async function Profile({ params }: any) {
       {profile.sns_links && (
         <div className="mt-2 flex flex-col gap-1">
           {profile.sns_links.youtube && (
-            <a href={profile.sns_links.youtube} className="text-blue-500 underline">
+            <a href={profile.sns_links.youtube} className="text-pink-500 underline">
               YouTube
             </a>
           )}
           {profile.sns_links.twitter && (
-            <a href={profile.sns_links.twitter} className="text-blue-500 underline">
+            <a href={profile.sns_links.twitter} className="text-pink-500 underline">
               Twitter
             </a>
           )}
@@ -44,7 +44,7 @@ export default async function Profile({ params }: any) {
         <p className="mt-2 text-sm text-gray-600">公開範囲: {profile.visibility}</p>
       )}
       <div className="mt-2">
-        <Link href={`/profile/${params.userId}/collab`} className="text-blue-500 underline">
+        <Link href={`/profile/${params.userId}/collab`} className="text-pink-500 underline">
           コラボ用プロフィールを見る
         </Link>
       </div>
