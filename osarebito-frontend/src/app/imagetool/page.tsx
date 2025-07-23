@@ -41,19 +41,28 @@ async function compressImage(file: File, ai: boolean): Promise<Blob> {
   if (ai) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const d = imageData.data // Pixel data array (RGBA)
+
     // Apply slight random variations to RGB channels
     for (let i = 0; i < d.length; i += 4) {
-      d[i] = clamp(d[i] + rand(-5, 5))     // Red channel
+      d[i] = clamp(d[i] + rand(-5, 5)) // Red channel
       d[i + 1] = clamp(d[i + 1] + rand(-5, 5)) // Green channel
       d[i + 2] = clamp(d[i + 2] + rand(-5, 5)) // Blue channel
     }
-    // Add larger random noise at intervals
-    for (let i = 0; i < d.length; i += 40) { // Every 10 pixels (40 bytes)
-      const noise = rand(0, 255) // Random grayscale noise
-      d[i] = noise
-      d[i + 1] = noise
-      d[i + 2] = noise
+
+    // Add semi-transparent noise dots at wider intervals
+    const dotSpacing = 30 // pixels between noise dots
+    const opacity = 0.3 // noise opacity
+
+    for (let y = 0; y < canvas.height; y += dotSpacing) {
+      for (let x = 0; x < canvas.width; x += dotSpacing) {
+        const idx = (y * canvas.width + x) * 4
+        const noise = rand(0, 255)
+        d[idx] = clamp(d[idx] * (1 - opacity) + noise * opacity)
+        d[idx + 1] = clamp(d[idx + 1] * (1 - opacity) + noise * opacity)
+        d[idx + 2] = clamp(d[idx + 2] * (1 - opacity) + noise * opacity)
+      }
     }
+
     // Put the modified image data back onto the canvas
     ctx.putImageData(imageData, 0, 0)
   }
