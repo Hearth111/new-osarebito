@@ -53,13 +53,13 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button className="bg-blue-500 text-white py-2" type="submit">
+        <button className="bg-pink-500 text-white py-2" type="submit">
           Login
         </button>
       </form>
       {message && <p className="mt-4">{message}</p>}
       <div className="mt-4">
-        <Link href="/signup" className="text-blue-500 underline">
+        <Link href="/signup" className="text-pink-500 underline">
           Go to Sign Up
         </Link>
       </div>

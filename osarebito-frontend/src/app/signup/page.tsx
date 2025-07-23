@@ -99,20 +99,20 @@ export default function SignUp() {
           ].map((r) => (
             <div
               key={r.key}
-              className={`flex-1 border p-4 cursor-pointer rounded ${role === r.key ? 'bg-blue-100 border-blue-500' : ''}`}
+              className={`flex-1 border p-4 cursor-pointer rounded ${role === r.key ? 'bg-pink-100 border-pink-500' : ''}`}
               onClick={() => setRole(r.key)}
             >
               {r.label}
             </div>
           ))}
         </div>
-        <button className="bg-blue-500 text-white py-2" type="submit">
+        <button className="bg-pink-500 text-white py-2" type="submit">
           Register
         </button>
       </form>
       {message && <p className="mt-4">{message}</p>}
       <div className="mt-4">
-        <Link href="/login" className="text-blue-500 underline">
+        <Link href="/login" className="text-pink-500 underline">
           Go to Login
         </Link>
       </div>

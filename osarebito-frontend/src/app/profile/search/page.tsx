@@ -41,7 +41,7 @@ export default function ProfileSearch() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button className="bg-blue-500 text-white px-4" onClick={handleSearch}>
+        <button className="bg-pink-500 text-white px-4" onClick={handleSearch}>
           検索
         </button>
       </div>
@@ -50,7 +50,7 @@ export default function ProfileSearch() {
         <ul className="list-disc pl-5">
           {results.map((u) => (
             <li key={u.user_id} className="mt-2">
-              <Link href={`/profile/${u.user_id}`} className="text-blue-500 underline">
+              <Link href={`/profile/${u.user_id}`} className="text-pink-500 underline">
                 {u.username}
               </Link>
             </li>
