@@ -19,6 +19,7 @@ export default function Login() {
       })
       if (res.status === 200) {
         localStorage.setItem('loggedIn', 'true')
+        localStorage.setItem('userId', userId)
         setMessage('Logged in')
         router.push('/')
       }
