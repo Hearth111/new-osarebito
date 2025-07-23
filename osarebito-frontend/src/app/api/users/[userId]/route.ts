@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
-  // 修正点：こちらも同様に、第一引数に request を追加します
+  // 修正点：こちらも第一引数に request を追加します
   request: NextRequest,
   context: { params: { userId: string } }
 ) {
