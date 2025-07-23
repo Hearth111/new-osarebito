@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(
-  // 修正点: 第1引数に `request` を追加
+  // 修正点：Next.jsのルールに従い、第一引数に request を追加します
   request: NextRequest,
   context: { params: { userId: string } }
 ) {
@@ -9,7 +9,6 @@ export async function PUT(
     const { userId } = context.params;
     const data = await request.json();
 
-    // 外部APIのURLは直接書かず、環境変数から読み込むのが安全です
     const backendApiUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
 
     const res = await fetch(`${backendApiUrl}/users/${userId}/profile`, {
@@ -18,7 +17,6 @@ export async function PUT(
       body: JSON.stringify(data),
     });
 
-    // バックエンドからのレスポンスをそのまま返す
     const body = await res.json();
     return NextResponse.json(body, { status: res.status });
 
