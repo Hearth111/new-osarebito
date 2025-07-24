@@ -2,10 +2,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, EmailStr
 import json
 from pathlib import Path
+from datetime import datetime
+from collections import Counter
 
 app = FastAPI()
 
 DATA_FILE = Path(__file__).resolve().parent / "users.json"
+POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 
@@ -28,6 +31,18 @@ def load_users():
 def save_users(users):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
+
+
+def load_posts():
+    if POSTS_FILE.exists():
+        with open(POSTS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_posts(posts):
+    with open(POSTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(posts, f, ensure_ascii=False, indent=2)
 
 
 @app.post("/register")
@@ -91,6 +106,20 @@ class CollabProfileUpdate(BaseModel):
     looking_for: str | None = None
     availability: str | None = None
     visibility: str | None = None
+
+
+class Post(BaseModel):
+    id: int
+    author_id: str
+    content: str
+    tags: list[str] = []
+    created_at: str
+
+
+class PostCreate(BaseModel):
+    author_id: str
+    content: str
+    tags: list[str] | None = None
 
 
 def remove_password(user: dict) -> dict:
@@ -257,3 +286,58 @@ def update_collab_profile(user_id: str, profile: CollabProfileUpdate):
             save_users(users)
             return {"message": "updated"}
     raise HTTPException(status_code=404, detail="User not found")
+
+
+# -------------------- Posts API --------------------
+
+
+@app.post("/posts")
+def create_post(post: PostCreate):
+    users = load_users()
+    if not any(u["user_id"] == post.author_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    posts = load_posts()
+    new_id = max([p["id"] for p in posts], default=0) + 1
+    item = {
+        "id": new_id,
+        "author_id": post.author_id,
+        "content": post.content,
+        "tags": post.tags or [],
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    posts.append(item)
+    save_posts(posts)
+    return item
+
+
+@app.get("/posts")
+def list_posts(feed: str = "all", user_id: str | None = None):
+    posts = load_posts()
+    posts.sort(key=lambda x: x["id"], reverse=True)
+    if feed == "following" and user_id:
+        users = load_users()
+        me = next((u for u in users if u["user_id"] == user_id), None)
+        if not me:
+            raise HTTPException(status_code=404, detail="User not found")
+        follow = set(me.get("following", []))
+        posts = [p for p in posts if p["author_id"] in follow or p["author_id"] == user_id]
+    elif feed == "user" and user_id:
+        posts = [p for p in posts if p["author_id"] == user_id]
+    return {"posts": posts}
+
+
+@app.get("/recommended_users")
+def recommended_users():
+    users = load_users()
+    ranked = sorted(users, key=lambda u: len(u.get("followers", [])), reverse=True)
+    return [remove_password(u) for u in ranked[:5]]
+
+
+@app.get("/popular_tags")
+def popular_tags():
+    posts = load_posts()
+    counter = Counter()
+    for p in posts:
+        for t in p.get("tags", []):
+            counter[t] += 1
+    return [{"name": t, "count": c} for t, c in counter.most_common(10)]
