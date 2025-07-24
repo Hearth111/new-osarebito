@@ -28,6 +28,7 @@ POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
 COMMENTS_FILE = Path(__file__).resolve().parent / "comments.json"
 MESSAGES_FILE = Path(__file__).resolve().parent / "messages.json"
 REPORTS_FILE = Path(__file__).resolve().parent / "reports.json"
+JOBS_FILE = Path(__file__).resolve().parent / "jobs.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 # reporting point weight by reporter role
@@ -121,6 +122,18 @@ def load_reports():
 def save_reports(reports):
     with open(REPORTS_FILE, "w", encoding="utf-8") as f:
         json.dump(reports, f, ensure_ascii=False, indent=2)
+
+
+def load_jobs():
+    if JOBS_FILE.exists():
+        with open(JOBS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_jobs(jobs):
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:
+        json.dump(jobs, f, ensure_ascii=False, indent=2)
 
 
 @app.post("/register")
@@ -245,6 +258,24 @@ class MessageCreate(BaseModel):
 class ReportCreate(BaseModel):
     reporter_id: str
     reason: str | None = None
+
+
+class JobPost(BaseModel):
+    id: int
+    author_id: str
+    title: str
+    description: str
+    reward: str | None = None
+    deadline: str | None = None
+    created_at: str
+
+
+class JobPostCreate(BaseModel):
+    author_id: str
+    title: str
+    description: str
+    reward: str | None = None
+    deadline: str | None = None
 
 
 def remove_password(user: dict) -> dict:
@@ -906,6 +937,38 @@ def tutorial_tasks(user_id: str):
     if datetime.utcnow() - created <= timedelta(days=7):
         return {"tasks": TUTORIAL_TASKS}
     return {"tasks": []}
+
+
+# -------------------- Job Board API --------------------
+
+
+@app.get("/jobs")
+def list_jobs():
+    jobs = load_jobs()
+    jobs.sort(key=lambda x: x["id"], reverse=True)
+    return {"jobs": jobs}
+
+
+@app.post("/jobs")
+async def create_job(job: JobPostCreate):
+    users = load_users()
+    if not any(u["user_id"] == job.author_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    jobs = load_jobs()
+    new_id = max([j["id"] for j in jobs], default=0) + 1
+    item = {
+        "id": new_id,
+        "author_id": job.author_id,
+        "title": job.title,
+        "description": job.description,
+        "reward": job.reward,
+        "deadline": job.deadline,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    jobs.append(item)
+    save_jobs(jobs)
+    await broadcast({"type": "new_job", "job": item})
+    return item
 
 
 @app.websocket("/ws/updates")

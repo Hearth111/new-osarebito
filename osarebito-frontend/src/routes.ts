@@ -40,3 +40,4 @@ export const reportCommentUrl = (commentId: number) => `${BACKEND_URL}/reports/c
 export const trendingPostsUrl = `${BACKEND_URL}/trending_posts`
 export const tutorialTasksUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/tutorial_tasks`
 export const achievementsUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/achievements`
+export const jobsUrl = `${BACKEND_URL}/jobs`
