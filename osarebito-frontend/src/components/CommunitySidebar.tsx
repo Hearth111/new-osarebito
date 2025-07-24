@@ -45,6 +45,10 @@ export default function CommunitySidebar() {
         <span className="w-5 h-5">🔖</span>
         <span>ブックマーク</span>
       </Link>
+      <Link href="/community/achievements" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
+        <SparklesIcon className="w-5 h-5" />
+        <span>実績</span>
+      </Link>
       {showTutorial && (
         <Link href="/community/tutorial" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
           <SparklesIcon className="w-5 h-5" />

@@ -43,6 +43,17 @@ TUTORIAL_TASKS = [
     "他のユーザーをフォローしよう",
 ]
 
+# Achievement names
+FIRST_POST_ACHIEVEMENT = "初投稿"
+FIRST_COMMENT_ACHIEVEMENT = "初コメント"
+
+
+def add_achievement(user: dict, name: str) -> None:
+    """Add an achievement to user if not already unlocked."""
+    ach = user.setdefault("achievements", [])
+    if name not in ach:
+        ach.append(name)
+
 
 class User(BaseModel):
     email: EmailStr
@@ -130,6 +141,7 @@ def register(user: User):
             "interested": [],
             "bookmarks": [],
             "notifications": [],
+            "achievements": [],
             "report_points": 0,
             "semiban_until": None,
         }
@@ -449,6 +461,7 @@ async def create_post(post: PostCreate):
     if is_semibanned(user):
         raise HTTPException(status_code=403, detail="Temporarily banned")
     posts = load_posts()
+    first_post = not any(p["author_id"] == post.author_id for p in posts)
     new_id = max([p["id"] for p in posts], default=0) + 1
     item = {
         "id": new_id,
@@ -464,6 +477,9 @@ async def create_post(post: PostCreate):
     }
     posts.append(item)
     save_posts(posts)
+    if first_post:
+        add_achievement(user, FIRST_POST_ACHIEVEMENT)
+        save_users(users)
     await broadcast({"type": "new_post", "post": item})
     return item
 
@@ -670,6 +686,7 @@ def create_comment(post_id: int, comment: CommentCreate):
     if is_semibanned(user):
         raise HTTPException(status_code=403, detail="Temporarily banned")
     comments = load_comments()
+    first_comment = not any(c["author_id"] == comment.author_id for c in comments)
     new_id = max([c["id"] for c in comments], default=0) + 1
     item = {
         "id": new_id,
@@ -680,6 +697,9 @@ def create_comment(post_id: int, comment: CommentCreate):
     }
     comments.append(item)
     save_comments(comments)
+    if first_comment:
+        add_achievement(user, FIRST_COMMENT_ACHIEVEMENT)
+        save_users(users)
     return item
 
 
@@ -859,6 +879,15 @@ def get_notifications(user_id: str):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"notifications": user.get("notifications", [])}
+
+
+@app.get("/users/{user_id}/achievements")
+def get_achievements(user_id: str):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"achievements": user.get("achievements", [])}
 
 
 @app.get("/users/{user_id}/tutorial_tasks")
