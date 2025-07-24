@@ -183,6 +183,7 @@ def register(user: User):
             "achievements": [],
             "report_points": 0,
             "semiban_until": None,
+            "blocks": [],
         }
     )
     save_users(users)
@@ -348,11 +349,19 @@ def is_semibanned(user: dict) -> bool:
 
 
 @app.get("/users/{user_id}")
-def get_user(user_id: str):
+def get_user(user_id: str, viewer_id: str | None = None):
     users = load_users()
     for u in users:
         if u["user_id"] == user_id:
-            return remove_password(u)
+            result = remove_password(u)
+            profile = result.get("profile", {})
+            vis = profile.get("visibility", "public")
+            if viewer_id != user_id:
+                if vis == "private" or (
+                    vis == "followers" and viewer_id not in u.get("followers", [])
+                ):
+                    result["profile"] = {}
+            return result
     raise HTTPException(status_code=404, detail="User not found")
 
 
@@ -361,6 +370,9 @@ class FollowRequest(BaseModel):
 
 
 class InterestRequest(BaseModel):
+    user_id: str
+
+class BlockRequest(BaseModel):
     user_id: str
 
 
@@ -373,6 +385,8 @@ def follow_user(target_id: str, data: FollowRequest):
     follower = next((u for u in users if u["user_id"] == data.follower_id), None)
     if not target or not follower:
         raise HTTPException(status_code=404, detail="User not found")
+    if target_id in follower.get("blocks", []) or data.follower_id in target.get("blocks", []):
+        raise HTTPException(status_code=403, detail="Blocked")
     followers = target.setdefault("followers", [])
     following = follower.setdefault("following", [])
     new = False
@@ -438,6 +452,39 @@ def remove_interest(target_id: str, data: InterestRequest):
         lst.remove(data.user_id)
         save_users(users)
     return {"message": "uninterested"}
+
+
+@app.post("/users/{target_id}/block")
+def block_user(target_id: str, req: BlockRequest):
+    if target_id == req.user_id:
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == target_id), None)
+    me = next((u for u in users if u["user_id"] == req.user_id), None)
+    if not target or not me:
+        raise HTTPException(status_code=404, detail="User not found")
+    blocks = me.setdefault("blocks", [])
+    if target_id not in blocks:
+        blocks.append(target_id)
+        if target_id in me.get("following", []):
+            me["following"].remove(target_id)
+        if req.user_id in target.get("followers", []):
+            target["followers"].remove(req.user_id)
+        save_users(users)
+    return {"message": "blocked"}
+
+
+@app.post("/users/{target_id}/unblock")
+def unblock_user(target_id: str, req: BlockRequest):
+    users = load_users()
+    me = next((u for u in users if u["user_id"] == req.user_id), None)
+    if not me:
+        raise HTTPException(status_code=404, detail="User not found")
+    blocks = me.setdefault("blocks", [])
+    if target_id in blocks:
+        blocks.remove(target_id)
+        save_users(users)
+    return {"message": "unblocked"}
 
 
 @app.get("/users/{user_id}/mutual_followers")
@@ -583,10 +630,17 @@ def list_posts(
 ):
     posts = load_posts()
     posts.sort(key=lambda x: x["id"], reverse=True)
+    users = load_users()
+    blocked_by_me: set[str] = set()
+    blocked_me: set[str] = set()
+    if user_id:
+        me = next((u for u in users if u["user_id"] == user_id), None)
+        if me:
+            blocked_by_me = set(me.get("blocks", []))
+        blocked_me = {u["user_id"] for u in users if user_id in u.get("blocks", [])}
     if category:
         posts = [p for p in posts if p.get("category") == category]
     if feed == "following" and user_id:
-        users = load_users()
         me = next((u for u in users if u["user_id"] == user_id), None)
         if not me:
             raise HTTPException(status_code=404, detail="User not found")
@@ -598,6 +652,10 @@ def list_posts(
         posts = [p for p in posts if p["author_id"] == user_id]
     result = []
     for p in posts:
+        if user_id and (
+            p["author_id"] in blocked_by_me or p["author_id"] in blocked_me
+        ):
+            continue
         item = p.copy()
         if item.get("anonymous"):
             item["author_id"] = "匿名"
@@ -933,8 +991,11 @@ async def send_message(msg: MessageCreate):
         raise HTTPException(status_code=404, detail="Sender not found")
     if is_semibanned(sender):
         raise HTTPException(status_code=403, detail="Temporarily banned")
-    if not any(u["user_id"] == msg.receiver_id for u in users):
+    receiver = next((u for u in users if u["user_id"] == msg.receiver_id), None)
+    if not receiver:
         raise HTTPException(status_code=404, detail="Receiver not found")
+    if msg.receiver_id in sender.get("blocks", []) or msg.sender_id in receiver.get("blocks", []):
+        raise HTTPException(status_code=403, detail="Blocked")
     messages = load_messages()
     new_id = max([m["id"] for m in messages], default=0) + 1
     item = {
@@ -968,6 +1029,13 @@ async def send_message(msg: MessageCreate):
 
 @app.get("/messages/{user_id}/with/{other_id}")
 def get_messages(user_id: str, other_id: str):
+    users = load_users()
+    me = next((u for u in users if u["user_id"] == user_id), None)
+    other = next((u for u in users if u["user_id"] == other_id), None)
+    if not me or not other:
+        raise HTTPException(status_code=404, detail="User not found")
+    if other_id in me.get("blocks", []) or user_id in other.get("blocks", []):
+        raise HTTPException(status_code=403, detail="Blocked")
     messages = load_messages()
     convo = [
         m

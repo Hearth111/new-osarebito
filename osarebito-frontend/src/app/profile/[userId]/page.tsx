@@ -4,6 +4,7 @@ import { getUserUrl } from '@/routes'
 import FollowButton from '../../../components/FollowButton'
 import InterestButton from '../../../components/InterestButton'
 import MutualLink from '../../../components/MutualLink'
+import BlockButton from '../../../components/BlockButton'
 
 async function getUser(userId: string) {
   const res = await fetch(getUserUrl(userId), { cache: 'no-store' })
@@ -37,6 +38,7 @@ export default async function Profile({ params }: any) {
         <MutualLink targetId={params.userId} />
         <FollowButton targetId={params.userId} followers={user.followers || []} />
         <InterestButton targetId={params.userId} interested={interested} />
+        <BlockButton targetId={params.userId} />
       </div>
       {profile.profile_image && (
         <Image src={profile.profile_image} alt="profile" width={200} height={200} className="mt-2" />
