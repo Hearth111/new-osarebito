@@ -8,6 +8,8 @@ export const followUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}
 export const unfollowUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/unfollow`
 export const interestUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/interest`
 export const uninterestUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/uninterest`
+export const blockUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/block`
+export const unblockUserUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/unblock`
 export const mutualFollowersUrl = (userId: string, myId: string) =>
   `${BACKEND_URL}/users/${userId}/mutual_followers?my_id=${myId}`
 export const followersUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/followers`
