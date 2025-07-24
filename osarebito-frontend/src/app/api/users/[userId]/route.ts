@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserUrl } from '../../../../routs'
+import { getUserUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function GET(req: NextRequest, { params }: { params: any }) {

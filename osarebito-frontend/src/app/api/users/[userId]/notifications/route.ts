@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { notificationsUrl } from '../../../../../routs'
+import { notificationsUrl } from '@/routes'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET(req: NextRequest, { params }: { params: any }) {

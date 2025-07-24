@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { BACKEND_URL } from '../../../routs'
+import { BACKEND_URL } from '@/routes'
 
 export async function GET() {
   const res = await fetch(`${BACKEND_URL}/recommended_users`)

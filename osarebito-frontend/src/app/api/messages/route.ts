@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendMessageUrl } from '../../../routs'
+import { sendMessageUrl } from '@/routes'
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { getCollabProfileUrl } from '../../../routs'
+import { getCollabProfileUrl } from '@/routes'
 import { useRouter } from 'next/navigation'
 
 export default function CollabProfileSettings() {

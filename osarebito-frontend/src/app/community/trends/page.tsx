@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { trendingPostsUrl } from '../../../routs'
+import { trendingPostsUrl } from '@/routes'
 
 interface Tag { name: string; count: number }
 interface Post {

@@ -1,4 +1,4 @@
-import { getCollabProfileUrl } from '../../../../routs'
+import { getCollabProfileUrl } from '@/routes'
 
 async function getCollabProfile(userId: string) {
   const res = await fetch(getCollabProfileUrl(userId), { cache: 'no-store' })

@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { getUserUrl } from '../../../routs'
+import { getUserUrl } from '@/routes'
 import FollowButton from '../../../components/FollowButton'
 import InterestButton from '../../../components/InterestButton'
 import MutualLink from '../../../components/MutualLink'

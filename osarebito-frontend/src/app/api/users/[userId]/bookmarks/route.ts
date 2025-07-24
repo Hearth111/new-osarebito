@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { userBookmarksUrl } from '../../../../../routs'
+import { userBookmarksUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function GET(req: NextRequest, { params }: { params: any }) {

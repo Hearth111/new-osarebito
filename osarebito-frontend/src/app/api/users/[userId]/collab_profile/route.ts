@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateCollabProfileUrl } from '../../../../../routs'
+import { updateCollabProfileUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function PUT(req: NextRequest, { params }: { params: any }) {

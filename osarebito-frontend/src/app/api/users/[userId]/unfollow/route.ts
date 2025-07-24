@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { unfollowUserUrl } from '../../../../../routs'
+import { unfollowUserUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function POST(req: NextRequest, { params }: { params: any }) {

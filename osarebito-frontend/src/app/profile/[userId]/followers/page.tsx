@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { followersUrl } from '../../../../routs'
+import { followersUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 async function getFollowers(userId: string) {

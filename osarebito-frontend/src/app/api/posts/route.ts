@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { postsUrl, createPostUrl } from '../../../routs'
+import { postsUrl, createPostUrl } from '@/routes'
 
 export async function GET(req: NextRequest) {
   try {

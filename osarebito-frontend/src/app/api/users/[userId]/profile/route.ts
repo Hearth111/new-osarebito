@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateProfileUrl } from '../../../../../routs'
+import { updateProfileUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function PUT(req: NextRequest, { params }: { params: any }) {
