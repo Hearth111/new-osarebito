@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, EmailStr
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
 
 app = FastAPI()
@@ -22,6 +22,7 @@ async def broadcast(message: dict) -> None:
     for ws in dead:
         connections.discard(ws)
 
+
 DATA_FILE = Path(__file__).resolve().parent / "users.json"
 POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
 COMMENTS_FILE = Path(__file__).resolve().parent / "comments.json"
@@ -29,6 +30,12 @@ MESSAGES_FILE = Path(__file__).resolve().parent / "messages.json"
 REPORTS_FILE = Path(__file__).resolve().parent / "reports.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
+# reporting point weight by reporter role
+ROLE_REPORT_POINTS = {
+    "推され人": 1,
+    "推し人": 1,
+    "お仕事人": 1,
+}
 
 
 class User(BaseModel):
@@ -106,16 +113,20 @@ def register(user: User):
     users = load_users()
     if any(u["user_id"] == user.user_id for u in users):
         raise HTTPException(status_code=400, detail="User ID already exists")
-    users.append({
-        **user.dict(),
-        "profile": {},
-        "collab_profile": {},
-        "followers": [],
-        "following": [],
-        "interested": [],
-        "bookmarks": [],
-        "notifications": [],
-    })
+    users.append(
+        {
+            **user.dict(),
+            "profile": {},
+            "collab_profile": {},
+            "followers": [],
+            "following": [],
+            "interested": [],
+            "bookmarks": [],
+            "notifications": [],
+            "report_points": 0,
+            "semiban_until": None,
+        }
+    )
     save_users(users)
     return {"message": "registered"}
 
@@ -173,6 +184,7 @@ class Post(BaseModel):
     anonymous: bool = False
     best_answer_id: int | None = None
     likes: list[str] = []
+    retweets: list[str] = []
     created_at: str
 
 
@@ -219,7 +231,19 @@ class ReportCreate(BaseModel):
 def remove_password(user: dict) -> dict:
     u = user.copy()
     u.pop("password", None)
+    u.pop("report_points", None)
+    u.pop("semiban_until", None)
     return u
+
+
+def is_semibanned(user: dict) -> bool:
+    until = user.get("semiban_until")
+    if until:
+        try:
+            return datetime.fromisoformat(until) > datetime.utcnow()
+        except Exception:
+            return False
+    return False
 
 
 @app.get("/users/{user_id}")
@@ -233,6 +257,7 @@ def get_user(user_id: str):
 
 class FollowRequest(BaseModel):
     follower_id: str
+
 
 class InterestRequest(BaseModel):
     user_id: str
@@ -360,7 +385,11 @@ def list_bookmarks(user_id: str):
 def search_users(query: str):
     users = load_users()
     query_lower = query.lower()
-    result = [remove_password(u) for u in users if query_lower in u["user_id"].lower() or query_lower in u["username"].lower()]
+    result = [
+        remove_password(u)
+        for u in users
+        if query_lower in u["user_id"].lower() or query_lower in u["username"].lower()
+    ]
     return result
 
 
@@ -407,8 +436,11 @@ def update_collab_profile(user_id: str, profile: CollabProfileUpdate):
 @app.post("/posts")
 async def create_post(post: PostCreate):
     users = load_users()
-    if not any(u["user_id"] == post.author_id for u in users):
+    user = next((u for u in users if u["user_id"] == post.author_id), None)
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if is_semibanned(user):
+        raise HTTPException(status_code=403, detail="Temporarily banned")
     posts = load_posts()
     new_id = max([p["id"] for p in posts], default=0) + 1
     item = {
@@ -420,6 +452,7 @@ async def create_post(post: PostCreate):
         "anonymous": post.anonymous,
         "best_answer_id": None,
         "likes": [],
+        "retweets": [],
         "created_at": datetime.utcnow().isoformat(),
     }
     posts.append(item)
@@ -429,7 +462,9 @@ async def create_post(post: PostCreate):
 
 
 @app.get("/posts")
-def list_posts(feed: str = "all", user_id: str | None = None, category: str | None = None):
+def list_posts(
+    feed: str = "all", user_id: str | None = None, category: str | None = None
+):
     posts = load_posts()
     posts.sort(key=lambda x: x["id"], reverse=True)
     if category:
@@ -440,7 +475,9 @@ def list_posts(feed: str = "all", user_id: str | None = None, category: str | No
         if not me:
             raise HTTPException(status_code=404, detail="User not found")
         follow = set(me.get("following", []))
-        posts = [p for p in posts if p["author_id"] in follow or p["author_id"] == user_id]
+        posts = [
+            p for p in posts if p["author_id"] in follow or p["author_id"] == user_id
+        ]
     elif feed == "user" and user_id:
         posts = [p for p in posts if p["author_id"] == user_id]
     result = []
@@ -472,7 +509,10 @@ def popular_tags():
 @app.get("/trending_posts")
 def trending_posts():
     posts = load_posts()
-    posts.sort(key=lambda x: len(x.get("likes", [])), reverse=True)
+    posts.sort(
+        key=lambda x: len(x.get("likes", [])) + len(x.get("retweets", [])),
+        reverse=True,
+    )
     result = []
     for p in posts[:10]:
         item = p.copy()
@@ -484,7 +524,12 @@ def trending_posts():
 
 # -------------------- Like API --------------------
 
+
 class LikeRequest(BaseModel):
+    user_id: str
+
+
+class RetweetRequest(BaseModel):
     user_id: str
 
 
@@ -516,7 +561,36 @@ async def unlike_post(post_id: int, data: LikeRequest):
     return {"likes": len(likes)}
 
 
+@app.post("/posts/{post_id}/retweet")
+async def retweet_post(post_id: int, data: RetweetRequest):
+    posts = load_posts()
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    retweets = post.setdefault("retweets", [])
+    if data.user_id not in retweets:
+        retweets.append(data.user_id)
+        save_posts(posts)
+        await broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
+    return {"retweets": len(retweets)}
+
+
+@app.post("/posts/{post_id}/unretweet")
+async def unretweet_post(post_id: int, data: RetweetRequest):
+    posts = load_posts()
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    retweets = post.setdefault("retweets", [])
+    if data.user_id in retweets:
+        retweets.remove(data.user_id)
+        save_posts(posts)
+        await broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
+    return {"retweets": len(retweets)}
+
+
 # -------------------- Bookmark API --------------------
+
 
 class BookmarkRequest(BaseModel):
     user_id: str
@@ -561,7 +635,9 @@ def list_likers(post_id: int):
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     users = load_users()
-    result = [remove_password(u) for u in users if u["user_id"] in post.get("likes", [])]
+    result = [
+        remove_password(u) for u in users if u["user_id"] in post.get("likes", [])
+    ]
     return result
 
 
@@ -581,8 +657,11 @@ def create_comment(post_id: int, comment: CommentCreate):
     if not any(p["id"] == post_id for p in posts):
         raise HTTPException(status_code=404, detail="Post not found")
     users = load_users()
-    if not any(u["user_id"] == comment.author_id for u in users):
+    user = next((u for u in users if u["user_id"] == comment.author_id), None)
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if is_semibanned(user):
+        raise HTTPException(status_code=403, detail="Temporarily banned")
     comments = load_comments()
     new_id = max([c["id"] for c in comments], default=0) + 1
     item = {
@@ -623,15 +702,25 @@ def set_best_answer(post_id: int, req: BestAnswerRequest):
 
 # -------------------- Report API --------------------
 
+
 @app.post("/reports/post/{post_id}")
 def report_post(post_id: int, rep: ReportCreate):
     posts = load_posts()
-    if not any(p["id"] == post_id for p in posts):
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     users = load_users()
-    if not any(u["user_id"] == rep.reporter_id for u in users):
+    reporter = next((u for u in users if u["user_id"] == rep.reporter_id), None)
+    if not reporter:
         raise HTTPException(status_code=404, detail="User not found")
     reports = load_reports()
+    if any(
+        r["target_type"] == "post"
+        and r["target_id"] == post_id
+        and r["reporter_id"] == rep.reporter_id
+        for r in reports
+    ):
+        raise HTTPException(status_code=400, detail="Already reported")
     new_id = max([r["id"] for r in reports], default=0) + 1
     item = {
         "id": new_id,
@@ -642,19 +731,39 @@ def report_post(post_id: int, rep: ReportCreate):
         "created_at": datetime.utcnow().isoformat(),
     }
     reports.append(item)
+    # add points
+    target = next((u for u in users if u["user_id"] == post["author_id"]), None)
+    if target:
+        weight = ROLE_REPORT_POINTS.get(reporter.get("role"), 1)
+        target["report_points"] = target.get("report_points", 0) + weight
+        if target["report_points"] >= 3:
+            target["semiban_until"] = (
+                datetime.utcnow() + timedelta(days=7)
+            ).isoformat()
+            target["report_points"] = 0
     save_reports(reports)
+    save_users(users)
     return {"message": "reported"}
 
 
 @app.post("/reports/comment/{comment_id}")
 def report_comment(comment_id: int, rep: ReportCreate):
     comments = load_comments()
-    if not any(c["id"] == comment_id for c in comments):
+    comment = next((c for c in comments if c["id"] == comment_id), None)
+    if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     users = load_users()
-    if not any(u["user_id"] == rep.reporter_id for u in users):
+    reporter = next((u for u in users if u["user_id"] == rep.reporter_id), None)
+    if not reporter:
         raise HTTPException(status_code=404, detail="User not found")
     reports = load_reports()
+    if any(
+        r["target_type"] == "comment"
+        and r["target_id"] == comment_id
+        and r["reporter_id"] == rep.reporter_id
+        for r in reports
+    ):
+        raise HTTPException(status_code=400, detail="Already reported")
     new_id = max([r["id"] for r in reports], default=0) + 1
     item = {
         "id": new_id,
@@ -665,17 +774,31 @@ def report_comment(comment_id: int, rep: ReportCreate):
         "created_at": datetime.utcnow().isoformat(),
     }
     reports.append(item)
+    target = next((u for u in users if u["user_id"] == comment["author_id"]), None)
+    if target:
+        weight = ROLE_REPORT_POINTS.get(reporter.get("role"), 1)
+        target["report_points"] = target.get("report_points", 0) + weight
+        if target["report_points"] >= 3:
+            target["semiban_until"] = (
+                datetime.utcnow() + timedelta(days=7)
+            ).isoformat()
+            target["report_points"] = 0
     save_reports(reports)
+    save_users(users)
     return {"message": "reported"}
 
 
 # -------------------- Message API --------------------
 
+
 @app.post("/messages")
 async def send_message(msg: MessageCreate):
     users = load_users()
-    if not any(u["user_id"] == msg.sender_id for u in users):
+    sender = next((u for u in users if u["user_id"] == msg.sender_id), None)
+    if not sender:
         raise HTTPException(status_code=404, detail="Sender not found")
+    if is_semibanned(sender):
+        raise HTTPException(status_code=403, detail="Temporarily banned")
     if not any(u["user_id"] == msg.receiver_id for u in users):
         raise HTTPException(status_code=404, detail="Receiver not found")
     messages = load_messages()
@@ -694,12 +817,14 @@ async def send_message(msg: MessageCreate):
     for u in users:
         if u["user_id"] == msg.receiver_id:
             notes = u.setdefault("notifications", [])
-            notes.append({
-                "type": "message",
-                "from": msg.sender_id,
-                "message_id": new_id,
-                "created_at": item["created_at"],
-            })
+            notes.append(
+                {
+                    "type": "message",
+                    "from": msg.sender_id,
+                    "message_id": new_id,
+                    "created_at": item["created_at"],
+                }
+            )
             break
     save_users(users)
 
@@ -711,7 +836,8 @@ async def send_message(msg: MessageCreate):
 def get_messages(user_id: str, other_id: str):
     messages = load_messages()
     convo = [
-        m for m in messages
+        m
+        for m in messages
         if (m["sender_id"] == user_id and m["receiver_id"] == other_id)
         or (m["sender_id"] == other_id and m["receiver_id"] == user_id)
     ]
