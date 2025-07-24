@@ -29,6 +29,8 @@ COMMENTS_FILE = Path(__file__).resolve().parent / "comments.json"
 MESSAGES_FILE = Path(__file__).resolve().parent / "messages.json"
 REPORTS_FILE = Path(__file__).resolve().parent / "reports.json"
 JOBS_FILE = Path(__file__).resolve().parent / "jobs.json"
+GROUPS_FILE = Path(__file__).resolve().parent / "groups.json"
+GROUP_MESSAGES_FILE = Path(__file__).resolve().parent / "group_messages.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 # reporting point weight by reporter role
@@ -134,6 +136,30 @@ def load_jobs():
 def save_jobs(jobs):
     with open(JOBS_FILE, "w", encoding="utf-8") as f:
         json.dump(jobs, f, ensure_ascii=False, indent=2)
+
+
+def load_groups():
+    if GROUPS_FILE.exists():
+        with open(GROUPS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_groups(groups):
+    with open(GROUPS_FILE, "w", encoding="utf-8") as f:
+        json.dump(groups, f, ensure_ascii=False, indent=2)
+
+
+def load_group_messages():
+    if GROUP_MESSAGES_FILE.exists():
+        with open(GROUP_MESSAGES_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_group_messages(messages):
+    with open(GROUP_MESSAGES_FILE, "w", encoding="utf-8") as f:
+        json.dump(messages, f, ensure_ascii=False, indent=2)
 
 
 @app.post("/register")
@@ -278,6 +304,31 @@ class JobPostCreate(BaseModel):
     deadline: str | None = None
 
 
+class Group(BaseModel):
+    id: int
+    name: str
+    members: list[str]
+
+
+class GroupCreate(BaseModel):
+    name: str
+    members: list[str]
+
+
+class GroupMessage(BaseModel):
+    id: int
+    group_id: int
+    sender_id: str
+    content: str
+    created_at: str
+
+
+class GroupMessageCreate(BaseModel):
+    group_id: int
+    sender_id: str
+    content: str
+
+
 def remove_password(user: dict) -> dict:
     u = user.copy()
     u.pop("password", None)
@@ -324,10 +375,21 @@ def follow_user(target_id: str, data: FollowRequest):
         raise HTTPException(status_code=404, detail="User not found")
     followers = target.setdefault("followers", [])
     following = follower.setdefault("following", [])
+    new = False
     if data.follower_id not in followers:
         followers.append(data.follower_id)
+        new = True
     if target_id not in following:
         following.append(target_id)
+    if new:
+        notes = target.setdefault("notifications", [])
+        notes.append(
+            {
+                "type": "follow",
+                "from": data.follower_id,
+                "created_at": datetime.utcnow().isoformat(),
+            }
+        )
     save_users(users)
     return {"message": "followed"}
 
@@ -937,6 +999,59 @@ def tutorial_tasks(user_id: str):
     if datetime.utcnow() - created <= timedelta(days=7):
         return {"tasks": TUTORIAL_TASKS}
     return {"tasks": []}
+
+
+# -------------------- Group Chat API --------------------
+
+
+@app.post("/groups")
+def create_group(group: GroupCreate):
+    users = load_users()
+    for mid in group.members:
+        if not any(u["user_id"] == mid for u in users):
+            raise HTTPException(status_code=404, detail="Member not found")
+    groups = load_groups()
+    new_id = max([g["id"] for g in groups], default=0) + 1
+    item = {"id": new_id, "name": group.name, "members": group.members}
+    groups.append(item)
+    save_groups(groups)
+    return item
+
+
+@app.get("/groups/{user_id}")
+def list_groups(user_id: str):
+    groups = load_groups()
+    result = [g for g in groups if user_id in g.get("members", [])]
+    return {"groups": result}
+
+
+@app.get("/groups/{group_id}/messages")
+def group_messages(group_id: int):
+    msgs = load_group_messages()
+    result = [m for m in msgs if m["group_id"] == group_id]
+    result.sort(key=lambda x: x["id"])
+    return {"messages": result}
+
+
+@app.post("/groups/{group_id}/messages")
+async def send_group_message(group_id: int, msg: GroupMessageCreate):
+    groups = load_groups()
+    group = next((g for g in groups if g["id"] == group_id), None)
+    if not group or msg.sender_id not in group.get("members", []):
+        raise HTTPException(status_code=403, detail="Not a member")
+    messages = load_group_messages()
+    new_id = max([m["id"] for m in messages], default=0) + 1
+    item = {
+        "id": new_id,
+        "group_id": group_id,
+        "sender_id": msg.sender_id,
+        "content": msg.content,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    messages.append(item)
+    save_group_messages(messages)
+    await broadcast({"type": "group_message", "group_id": group_id, "message": item})
+    return item
 
 
 # -------------------- Job Board API --------------------
