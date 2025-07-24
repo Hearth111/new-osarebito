@@ -87,6 +87,7 @@ def register(user: User):
         "followers": [],
         "following": [],
         "interested": [],
+        "bookmarks": [],
     })
     save_users(users)
     return {"message": "registered"}
@@ -290,6 +291,25 @@ def list_following(user_id: str):
     return result
 
 
+@app.get("/users/{user_id}/bookmarks")
+def list_bookmarks(user_id: str):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    posts = load_posts()
+    ids = set(user.get("bookmarks", []))
+    result = []
+    for p in posts:
+        if p["id"] in ids:
+            item = p.copy()
+            if item.get("anonymous"):
+                item["author_id"] = "匿名"
+            result.append(item)
+    result.sort(key=lambda x: x["id"], reverse=True)
+    return {"posts": result}
+
+
 @app.get("/users/search")
 def search_users(query: str):
     users = load_users()
@@ -435,6 +455,44 @@ async def unlike_post(post_id: int, data: LikeRequest):
         save_posts(posts)
         await broadcast({"type": "like", "post_id": post_id, "likes": likes})
     return {"likes": len(likes)}
+
+
+# -------------------- Bookmark API --------------------
+
+class BookmarkRequest(BaseModel):
+    user_id: str
+
+
+@app.post("/posts/{post_id}/bookmark")
+def bookmark_post(post_id: int, data: BookmarkRequest):
+    posts = load_posts()
+    if not any(p["id"] == post_id for p in posts):
+        raise HTTPException(status_code=404, detail="Post not found")
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == data.user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    bookmarks = user.setdefault("bookmarks", [])
+    if post_id not in bookmarks:
+        bookmarks.append(post_id)
+        save_users(users)
+    return {"bookmarks": len(bookmarks)}
+
+
+@app.post("/posts/{post_id}/unbookmark")
+def unbookmark_post(post_id: int, data: BookmarkRequest):
+    posts = load_posts()
+    if not any(p["id"] == post_id for p in posts):
+        raise HTTPException(status_code=404, detail="Post not found")
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == data.user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    bookmarks = user.setdefault("bookmarks", [])
+    if post_id in bookmarks:
+        bookmarks.remove(post_id)
+        save_users(users)
+    return {"bookmarks": len(bookmarks)}
 
 
 @app.get("/posts/{post_id}/likers")

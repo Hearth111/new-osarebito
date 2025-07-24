@@ -26,3 +26,6 @@ export const postLikersUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}
 export const postCommentsUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/comments`
 export const bestAnswerUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/best_answer`
 export const updatesWsUrl = BACKEND_URL.replace(/^http/, 'ws') + '/ws/updates'
+export const bookmarkPostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/bookmark`
+export const unbookmarkPostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/unbookmark`
+export const userBookmarksUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/bookmarks`
