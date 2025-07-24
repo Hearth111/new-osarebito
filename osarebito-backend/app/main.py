@@ -25,6 +25,7 @@ async def broadcast(message: dict) -> None:
 DATA_FILE = Path(__file__).resolve().parent / "users.json"
 POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
 COMMENTS_FILE = Path(__file__).resolve().parent / "comments.json"
+MESSAGES_FILE = Path(__file__).resolve().parent / "messages.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 
@@ -73,6 +74,18 @@ def save_comments(comments):
         json.dump(comments, f, ensure_ascii=False, indent=2)
 
 
+def load_messages():
+    if MESSAGES_FILE.exists():
+        with open(MESSAGES_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_messages(messages):
+    with open(MESSAGES_FILE, "w", encoding="utf-8") as f:
+        json.dump(messages, f, ensure_ascii=False, indent=2)
+
+
 @app.post("/register")
 def register(user: User):
     if user.role not in ALLOWED_ROLES:
@@ -88,6 +101,7 @@ def register(user: User):
         "following": [],
         "interested": [],
         "bookmarks": [],
+        "notifications": [],
     })
     save_users(users)
     return {"message": "registered"}
@@ -167,6 +181,20 @@ class Comment(BaseModel):
 
 class CommentCreate(BaseModel):
     author_id: str
+    content: str
+
+
+class Message(BaseModel):
+    id: int
+    sender_id: str
+    receiver_id: str
+    content: str
+    created_at: str
+
+
+class MessageCreate(BaseModel):
+    sender_id: str
+    receiver_id: str
     content: str
 
 
@@ -560,6 +588,65 @@ def set_best_answer(post_id: int, req: BestAnswerRequest):
         post["best_answer_id"] = req.comment_id
     save_posts(posts)
     return {"best_answer_id": post["best_answer_id"]}
+
+
+# -------------------- Message API --------------------
+
+@app.post("/messages")
+async def send_message(msg: MessageCreate):
+    users = load_users()
+    if not any(u["user_id"] == msg.sender_id for u in users):
+        raise HTTPException(status_code=404, detail="Sender not found")
+    if not any(u["user_id"] == msg.receiver_id for u in users):
+        raise HTTPException(status_code=404, detail="Receiver not found")
+    messages = load_messages()
+    new_id = max([m["id"] for m in messages], default=0) + 1
+    item = {
+        "id": new_id,
+        "sender_id": msg.sender_id,
+        "receiver_id": msg.receiver_id,
+        "content": msg.content,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    messages.append(item)
+    save_messages(messages)
+
+    # add notification to receiver
+    for u in users:
+        if u["user_id"] == msg.receiver_id:
+            notes = u.setdefault("notifications", [])
+            notes.append({
+                "type": "message",
+                "from": msg.sender_id,
+                "message_id": new_id,
+                "created_at": item["created_at"],
+            })
+            break
+    save_users(users)
+
+    await broadcast({"type": "new_message", "message": item})
+    return item
+
+
+@app.get("/messages/{user_id}/with/{other_id}")
+def get_messages(user_id: str, other_id: str):
+    messages = load_messages()
+    convo = [
+        m for m in messages
+        if (m["sender_id"] == user_id and m["receiver_id"] == other_id)
+        or (m["sender_id"] == other_id and m["receiver_id"] == user_id)
+    ]
+    convo.sort(key=lambda x: x["id"])
+    return {"messages": convo}
+
+
+@app.get("/users/{user_id}/notifications")
+def get_notifications(user_id: str):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"notifications": user.get("notifications", [])}
 
 
 @app.websocket("/ws/updates")

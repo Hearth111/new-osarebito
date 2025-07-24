@@ -4,6 +4,7 @@ import {
   ChatBubbleLeftRightIcon,
   HashtagIcon,
   BellIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/outline'
 
 export default function CommunitySidebar() {
@@ -21,6 +22,10 @@ export default function CommunitySidebar() {
       <Link href="/community/notifications" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
         <BellIcon className="w-5 h-5" />
         <span>通知</span>
+      </Link>
+      <Link href="/community/messages" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
+        <EnvelopeIcon className="w-5 h-5" />
+        <span>メッセージ</span>
       </Link>
       <Link href="/community/bookmarks" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
         <span className="w-5 h-5">🔖</span>
