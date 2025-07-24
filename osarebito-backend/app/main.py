@@ -141,6 +141,9 @@ class Post(BaseModel):
     author_id: str
     content: str
     tags: list[str] = []
+    category: str | None = None
+    anonymous: bool = False
+    best_answer_id: int | None = None
     likes: list[str] = []
     created_at: str
 
@@ -149,6 +152,8 @@ class PostCreate(BaseModel):
     author_id: str
     content: str
     tags: list[str] | None = None
+    category: str | None = None
+    anonymous: bool = False
 
 
 class Comment(BaseModel):
@@ -345,6 +350,9 @@ async def create_post(post: PostCreate):
         "author_id": post.author_id,
         "content": post.content,
         "tags": post.tags or [],
+        "category": post.category,
+        "anonymous": post.anonymous,
+        "best_answer_id": None,
         "likes": [],
         "created_at": datetime.utcnow().isoformat(),
     }
@@ -355,9 +363,11 @@ async def create_post(post: PostCreate):
 
 
 @app.get("/posts")
-def list_posts(feed: str = "all", user_id: str | None = None):
+def list_posts(feed: str = "all", user_id: str | None = None, category: str | None = None):
     posts = load_posts()
     posts.sort(key=lambda x: x["id"], reverse=True)
+    if category:
+        posts = [p for p in posts if p.get("category") == category]
     if feed == "following" and user_id:
         users = load_users()
         me = next((u for u in users if u["user_id"] == user_id), None)
@@ -367,7 +377,13 @@ def list_posts(feed: str = "all", user_id: str | None = None):
         posts = [p for p in posts if p["author_id"] in follow or p["author_id"] == user_id]
     elif feed == "user" and user_id:
         posts = [p for p in posts if p["author_id"] == user_id]
-    return {"posts": posts}
+    result = []
+    for p in posts:
+        item = p.copy()
+        if item.get("anonymous"):
+            item["author_id"] = "匿名"
+        result.append(item)
+    return {"posts": result}
 
 
 @app.get("/recommended_users")
@@ -462,6 +478,30 @@ def create_comment(post_id: int, comment: CommentCreate):
     comments.append(item)
     save_comments(comments)
     return item
+
+
+class BestAnswerRequest(BaseModel):
+    comment_id: int
+    user_id: str
+
+
+@app.put("/posts/{post_id}/best_answer")
+def set_best_answer(post_id: int, req: BestAnswerRequest):
+    posts = load_posts()
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post["author_id"] != req.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    comments = load_comments()
+    if not any(c["id"] == req.comment_id and c["post_id"] == post_id for c in comments):
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if post.get("best_answer_id") == req.comment_id:
+        post["best_answer_id"] = None
+    else:
+        post["best_answer_id"] = req.comment_id
+    save_posts(posts)
+    return {"best_answer_id": post["best_answer_id"]}
 
 
 @app.websocket("/ws/updates")

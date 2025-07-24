@@ -24,4 +24,5 @@ export const likePostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/l
 export const unlikePostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/unlike`
 export const postLikersUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/likers`
 export const postCommentsUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/comments`
+export const bestAnswerUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/best_answer`
 export const updatesWsUrl = BACKEND_URL.replace(/^http/, 'ws') + '/ws/updates'
