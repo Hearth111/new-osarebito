@@ -50,7 +50,7 @@ async function compressImage(file: File, ai: boolean): Promise<Blob> {
     }
 
     // Add semi-transparent noise dots at wider intervals
-    const dotSpacing = 30 // pixels between noise dots
+    const dotSpacing = 5 // pixels between noise dots
     const opacity = 0.3 // noise opacity
 
     for (let y = 0; y < canvas.height; y += dotSpacing) {
