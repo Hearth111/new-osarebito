@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import Link from 'next/link'
 import { trendingPostsUrl } from '@/routes'
 
 interface Tag { name: string; count: number }
@@ -28,9 +29,13 @@ export default function CommunityTrends() {
         <h2 className="font-semibold mb-2">人気タグ</h2>
         <div className="flex flex-wrap gap-2">
           {tags.map((t) => (
-            <span key={t.name} className="bg-pink-100 px-2 py-1 text-sm">
+            <Link
+              key={t.name}
+              href={`/community/tag/${encodeURIComponent(t.name)}`}
+              className="bg-pink-100 px-2 py-1 text-sm underline"
+            >
               #{t.name} ({t.count})
-            </span>
+            </Link>
           ))}
         </div>
       </section>

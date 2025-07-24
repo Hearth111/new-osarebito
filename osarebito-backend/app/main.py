@@ -638,6 +638,20 @@ def trending_posts():
     return {"posts": result}
 
 
+@app.get("/posts/by_tag")
+def posts_by_tag(tag: str):
+    posts = load_posts()
+    result = []
+    for p in posts:
+        if tag in p.get("tags", []):
+            item = p.copy()
+            if item.get("anonymous"):
+                item["author_id"] = "匿名"
+            result.append(item)
+    result.sort(key=lambda x: x["id"], reverse=True)
+    return {"posts": result}
+
+
 # -------------------- Like API --------------------
 
 
