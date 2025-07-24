@@ -26,6 +26,7 @@ DATA_FILE = Path(__file__).resolve().parent / "users.json"
 POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
 COMMENTS_FILE = Path(__file__).resolve().parent / "comments.json"
 MESSAGES_FILE = Path(__file__).resolve().parent / "messages.json"
+REPORTS_FILE = Path(__file__).resolve().parent / "reports.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 
@@ -84,6 +85,18 @@ def load_messages():
 def save_messages(messages):
     with open(MESSAGES_FILE, "w", encoding="utf-8") as f:
         json.dump(messages, f, ensure_ascii=False, indent=2)
+
+
+def load_reports():
+    if REPORTS_FILE.exists():
+        with open(REPORTS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_reports(reports):
+    with open(REPORTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(reports, f, ensure_ascii=False, indent=2)
 
 
 @app.post("/register")
@@ -196,6 +209,11 @@ class MessageCreate(BaseModel):
     sender_id: str
     receiver_id: str
     content: str
+
+
+class ReportCreate(BaseModel):
+    reporter_id: str
+    reason: str | None = None
 
 
 def remove_password(user: dict) -> dict:
@@ -451,6 +469,19 @@ def popular_tags():
     return [{"name": t, "count": c} for t, c in counter.most_common(10)]
 
 
+@app.get("/trending_posts")
+def trending_posts():
+    posts = load_posts()
+    posts.sort(key=lambda x: len(x.get("likes", [])), reverse=True)
+    result = []
+    for p in posts[:10]:
+        item = p.copy()
+        if item.get("anonymous"):
+            item["author_id"] = "匿名"
+        result.append(item)
+    return {"posts": result}
+
+
 # -------------------- Like API --------------------
 
 class LikeRequest(BaseModel):
@@ -588,6 +619,54 @@ def set_best_answer(post_id: int, req: BestAnswerRequest):
         post["best_answer_id"] = req.comment_id
     save_posts(posts)
     return {"best_answer_id": post["best_answer_id"]}
+
+
+# -------------------- Report API --------------------
+
+@app.post("/reports/post/{post_id}")
+def report_post(post_id: int, rep: ReportCreate):
+    posts = load_posts()
+    if not any(p["id"] == post_id for p in posts):
+        raise HTTPException(status_code=404, detail="Post not found")
+    users = load_users()
+    if not any(u["user_id"] == rep.reporter_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    reports = load_reports()
+    new_id = max([r["id"] for r in reports], default=0) + 1
+    item = {
+        "id": new_id,
+        "target_type": "post",
+        "target_id": post_id,
+        "reporter_id": rep.reporter_id,
+        "reason": rep.reason or "",
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    reports.append(item)
+    save_reports(reports)
+    return {"message": "reported"}
+
+
+@app.post("/reports/comment/{comment_id}")
+def report_comment(comment_id: int, rep: ReportCreate):
+    comments = load_comments()
+    if not any(c["id"] == comment_id for c in comments):
+        raise HTTPException(status_code=404, detail="Comment not found")
+    users = load_users()
+    if not any(u["user_id"] == rep.reporter_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    reports = load_reports()
+    new_id = max([r["id"] for r in reports], default=0) + 1
+    item = {
+        "id": new_id,
+        "target_type": "comment",
+        "target_id": comment_id,
+        "reporter_id": rep.reporter_id,
+        "reason": rep.reason or "",
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    reports.append(item)
+    save_reports(reports)
+    return {"message": "reported"}
 
 
 # -------------------- Message API --------------------
