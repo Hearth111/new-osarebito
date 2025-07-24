@@ -41,3 +41,6 @@ export const trendingPostsUrl = `${BACKEND_URL}/trending_posts`
 export const tutorialTasksUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/tutorial_tasks`
 export const achievementsUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/achievements`
 export const jobsUrl = `${BACKEND_URL}/jobs`
+export const createGroupUrl = `${BACKEND_URL}/groups`
+export const userGroupsUrl = (userId: string) => `${BACKEND_URL}/groups/${userId}`
+export const groupMessagesUrl = (groupId: number) => `${BACKEND_URL}/groups/${groupId}/messages`

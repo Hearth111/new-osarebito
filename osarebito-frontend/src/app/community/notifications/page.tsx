@@ -29,8 +29,10 @@ export default function CommunityNotifications() {
         <ul className="space-y-2">
           {notes.map((n, idx) => (
             <li key={idx} className="text-sm">
-              {n.type === 'message' ? (
+              {n.type === 'message' && n.from ? (
                 <span>{n.from} からメッセージが届きました。</span>
+              ) : n.type === 'follow' && n.from ? (
+                <span>{n.from} にフォローされました。</span>
               ) : (
                 <span>{n.type}</span>
               )}
