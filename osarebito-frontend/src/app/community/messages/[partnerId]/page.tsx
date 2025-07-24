@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useParams } from 'next/navigation'
-import { sendMessageUrl } from '../../../../routs'
+import { sendMessageUrl } from '@/routes'
 
 interface Message {
   id: number

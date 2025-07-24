@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { interestUserUrl } from '../../../../../routs'
+import { interestUserUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function POST(req: NextRequest, { params }: { params: any }) {

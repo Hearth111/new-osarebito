@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { searchUsersUrl } from '../../../../routs'
+import { searchUsersUrl } from '@/routes'
 
 export async function GET(req: NextRequest) {
   try {

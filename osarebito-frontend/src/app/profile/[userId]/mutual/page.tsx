@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { mutualFollowersUrl } from '../../../../routs'
+import { mutualFollowersUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 async function getMutualFollowers(userId: string, myId: string) {
