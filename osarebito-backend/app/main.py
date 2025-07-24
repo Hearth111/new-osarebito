@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, EmailStr
 import json
 from pathlib import Path
@@ -6,6 +6,21 @@ from datetime import datetime
 from collections import Counter
 
 app = FastAPI()
+
+# WebSocket connection management
+connections: set[WebSocket] = set()
+
+
+async def broadcast(message: dict) -> None:
+    """Send a JSON message to all connected WebSocket clients."""
+    dead: list[WebSocket] = []
+    for ws in list(connections):
+        try:
+            await ws.send_json(message)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        connections.discard(ws)
 
 DATA_FILE = Path(__file__).resolve().parent / "users.json"
 POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
@@ -319,7 +334,7 @@ def update_collab_profile(user_id: str, profile: CollabProfileUpdate):
 
 
 @app.post("/posts")
-def create_post(post: PostCreate):
+async def create_post(post: PostCreate):
     users = load_users()
     if not any(u["user_id"] == post.author_id for u in users):
         raise HTTPException(status_code=404, detail="User not found")
@@ -335,6 +350,7 @@ def create_post(post: PostCreate):
     }
     posts.append(item)
     save_posts(posts)
+    await broadcast({"type": "new_post", "post": item})
     return item
 
 
@@ -378,7 +394,7 @@ class LikeRequest(BaseModel):
 
 
 @app.post("/posts/{post_id}/like")
-def like_post(post_id: int, data: LikeRequest):
+async def like_post(post_id: int, data: LikeRequest):
     posts = load_posts()
     post = next((p for p in posts if p["id"] == post_id), None)
     if not post:
@@ -387,11 +403,12 @@ def like_post(post_id: int, data: LikeRequest):
     if data.user_id not in likes:
         likes.append(data.user_id)
         save_posts(posts)
+        await broadcast({"type": "like", "post_id": post_id, "likes": likes})
     return {"likes": len(likes)}
 
 
 @app.post("/posts/{post_id}/unlike")
-def unlike_post(post_id: int, data: LikeRequest):
+async def unlike_post(post_id: int, data: LikeRequest):
     posts = load_posts()
     post = next((p for p in posts if p["id"] == post_id), None)
     if not post:
@@ -400,6 +417,7 @@ def unlike_post(post_id: int, data: LikeRequest):
     if data.user_id in likes:
         likes.remove(data.user_id)
         save_posts(posts)
+        await broadcast({"type": "like", "post_id": post_id, "likes": likes})
     return {"likes": len(likes)}
 
 
@@ -444,3 +462,14 @@ def create_comment(post_id: int, comment: CommentCreate):
     comments.append(item)
     save_comments(comments)
     return item
+
+
+@app.websocket("/ws/updates")
+async def websocket_updates(websocket: WebSocket):
+    await websocket.accept()
+    connections.add(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        connections.discard(websocket)
