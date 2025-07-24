@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
-import { updatesWsUrl } from '../../routs'
+import { updatesWsUrl, bestAnswerUrl } from '../../routs'
 
 interface Post {
   id: number
@@ -10,6 +10,9 @@ interface Post {
   content: string
   created_at: string
   tags: string[]
+  category?: string | null
+  anonymous?: boolean
+  best_answer_id?: number | null
   likes?: string[]
 }
 
@@ -29,11 +32,14 @@ interface Comment {
 export default function CommunityHome() {
   const [feed, setFeed] = useState('all')
   const [posts, setPosts] = useState<Post[]>([])
+  const [category, setCategory] = useState('')
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<User[]>([])
   const [recoUsers, setRecoUsers] = useState<User[]>([])
   const [tags, setTags] = useState<{ name: string; count: number }[]>([])
   const [newPost, setNewPost] = useState('')
+  const [newCategory, setNewCategory] = useState('')
+  const [anonymous, setAnonymous] = useState(false)
   const [comments, setComments] = useState<Record<number, Comment[]>>({})
   const [commentText, setCommentText] = useState<Record<number, string>>({})
   const [showComments, setShowComments] = useState<Record<number, boolean>>({})
@@ -61,6 +67,7 @@ export default function CommunityHome() {
 
   const fetchPosts = async (f: string) => {
     const params = new URLSearchParams({ feed: f })
+    if (category) params.append('category', category)
     const userId = localStorage.getItem('userId') || ''
     if (userId) params.append('user_id', userId)
     const res = await axios.get(`/api/posts?${params.toString()}`)
@@ -69,7 +76,7 @@ export default function CommunityHome() {
 
   useEffect(() => {
     fetchPosts(feed)
-  }, [feed])
+  }, [feed, category])
 
   useEffect(() => {
     const loadSide = async () => {
@@ -84,8 +91,10 @@ export default function CommunityHome() {
   const submitPost = async () => {
     const author_id = localStorage.getItem('userId') || ''
     if (!author_id || !newPost) return
-    await axios.post('/api/posts', { author_id, content: newPost })
+    await axios.post('/api/posts', { author_id, content: newPost, category: newCategory || null, anonymous })
     setNewPost('')
+    setNewCategory('')
+    setAnonymous(false)
     fetchPosts(feed)
   }
 
@@ -122,6 +131,17 @@ export default function CommunityHome() {
     loadComments(postId)
   }
 
+  const toggleBest = async (postId: number, commentId: number, current: boolean) => {
+    const user_id = localStorage.getItem('userId') || ''
+    if (!user_id) return
+    const res = await axios.put(bestAnswerUrl(postId), { comment_id: commentId, user_id })
+    setPosts((p) =>
+      p.map((post) =>
+        post.id === postId ? { ...post, best_answer_id: res.data.best_answer_id } : post,
+      ),
+    )
+  }
+
   const doSearch = async () => {
     if (!search) return
     const res = await axios.get(`/api/users/search?query=${encodeURIComponent(search)}`)
@@ -144,6 +164,12 @@ export default function CommunityHome() {
           >
             フォロー中
           </button>
+          <select className="border" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">カテゴリ指定なし</option>
+            <option value="お悩み相談">お悩み相談</option>
+            <option value="コラボ募集">コラボ募集</option>
+            <option value="雑談">雑談</option>
+          </select>
         </div>
         <div className="mb-4 flex gap-2">
           <textarea
@@ -153,6 +179,16 @@ export default function CommunityHome() {
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="いまどうしてる？"
           />
+          <select className="border" value={newCategory} onChange={(e) => setNewCategory(e.target.value)}>
+            <option value="">カテゴリなし</option>
+            <option value="お悩み相談">お悩み相談</option>
+            <option value="コラボ募集">コラボ募集</option>
+            <option value="雑談">雑談</option>
+          </select>
+          <label className="flex items-center gap-1 text-sm">
+            <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
+            匿名
+          </label>
           <button className="bg-pink-500 text-white px-4" onClick={submitPost}>
             投稿
           </button>
@@ -160,6 +196,9 @@ export default function CommunityHome() {
         {posts.map((p) => (
           <div key={p.id} className="border p-3 mb-3">
             <div className="text-sm text-gray-600">{p.author_id}</div>
+            {p.category && (
+              <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
+            )}
             <p>{p.content}</p>
             {p.tags && p.tags.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-2 text-sm text-pink-600">
@@ -189,9 +228,23 @@ export default function CommunityHome() {
             {showComments[p.id] && (
               <div className="mt-2 space-y-2">
                 {(comments[p.id] || []).map((c) => (
-                  <div key={c.id} className="border-t pt-1 text-sm">
+                  <div
+                    key={c.id}
+                    className={`border-t pt-1 text-sm ${p.best_answer_id === c.id ? 'bg-yellow-50' : ''}`}
+                  >
                     <span className="text-gray-600 mr-2">{c.author_id}</span>
                     {c.content}
+                    {p.best_answer_id === c.id && (
+                      <span className="ml-2 text-xs text-red-500">ベストアンサー</span>
+                    )}
+                    {p.author_id === (typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '') && (
+                      <button
+                        className="ml-2 text-xs underline"
+                        onClick={() => toggleBest(p.id, c.id, p.best_answer_id === c.id)}
+                      >
+                        {p.best_answer_id === c.id ? '取り消し' : 'ベスト'}
+                      </button>
+                    )}
                   </div>
                 ))}
                 <div className="flex gap-2">
