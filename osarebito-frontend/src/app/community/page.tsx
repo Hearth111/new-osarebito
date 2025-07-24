@@ -14,6 +14,7 @@ interface Post {
   anonymous?: boolean
   best_answer_id?: number | null
   likes?: string[]
+  retweets?: string[]
 }
 
 interface User {
@@ -56,6 +57,12 @@ export default function CommunityHome() {
           setPosts((p) =>
             p.map((post) =>
               post.id === msg.post_id ? { ...post, likes: msg.likes } : post,
+            ),
+          )
+        } else if (msg.type === 'retweet') {
+          setPosts((p) =>
+            p.map((post) =>
+              post.id === msg.post_id ? { ...post, retweets: msg.retweets } : post,
             ),
           )
         }
@@ -118,6 +125,27 @@ export default function CommunityHome() {
               likes: liked
                 ? (p.likes || []).filter((v) => v !== user_id)
                 : [...(p.likes || []), user_id],
+            }
+          : p,
+      ),
+    )
+  }
+
+  const handleRetweet = async (postId: number, rted: boolean) => {
+    const user_id = localStorage.getItem('userId') || ''
+    if (!user_id) return
+    const url = rted
+      ? `/api/posts/${postId}/unretweet`
+      : `/api/posts/${postId}/retweet`
+    await axios.post(url, { user_id })
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              retweets: rted
+                ? (p.retweets || []).filter((v) => v !== user_id)
+                : [...(p.retweets || []), user_id],
             }
           : p,
       ),
@@ -258,6 +286,19 @@ export default function CommunityHome() {
                 }}
               >
                 コメント {comments[p.id]?.length || 0}
+              </button>
+              <button
+                className="underline"
+                onClick={() =>
+                  handleRetweet(
+                    p.id,
+                    (p.retweets || []).includes(
+                      localStorage.getItem('userId') || '',
+                    ),
+                  )
+                }
+              >
+                リツイート {p.retweets ? p.retweets.length : 0}
               </button>
               <button
                 className="underline"

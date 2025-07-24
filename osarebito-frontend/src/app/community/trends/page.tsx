@@ -9,6 +9,7 @@ interface Post {
   author_id: string
   content: string
   likes?: string[]
+  retweets?: string[]
 }
 
 export default function CommunityTrends() {
@@ -40,7 +41,8 @@ export default function CommunityTrends() {
             <div className="text-sm text-gray-600">{p.author_id}</div>
             <p>{p.content}</p>
             <div className="text-xs text-gray-600 mt-1">
-              いいね {p.likes ? p.likes.length : 0}
+              いいね {p.likes ? p.likes.length : 0} / リツイート{' '}
+              {p.retweets ? p.retweets.length : 0}
             </div>
           </div>
         ))}
