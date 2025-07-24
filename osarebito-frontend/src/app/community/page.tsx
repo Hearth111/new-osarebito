@@ -9,11 +9,20 @@ interface Post {
   content: string
   created_at: string
   tags: string[]
+  likes?: string[]
 }
 
 interface User {
   user_id: string
   username: string
+}
+
+interface Comment {
+  id: number
+  post_id: number
+  author_id: string
+  content: string
+  created_at: string
 }
 
 export default function CommunityHome() {
@@ -24,6 +33,9 @@ export default function CommunityHome() {
   const [recoUsers, setRecoUsers] = useState<User[]>([])
   const [tags, setTags] = useState<{ name: string; count: number }[]>([])
   const [newPost, setNewPost] = useState('')
+  const [comments, setComments] = useState<Record<number, Comment[]>>({})
+  const [commentText, setCommentText] = useState<Record<number, string>>({})
+  const [showComments, setShowComments] = useState<Record<number, boolean>>({})
 
   const fetchPosts = async (f: string) => {
     const params = new URLSearchParams({ feed: f })
@@ -53,6 +65,39 @@ export default function CommunityHome() {
     await axios.post('/api/posts', { author_id, content: newPost })
     setNewPost('')
     fetchPosts(feed)
+  }
+
+  const handleLike = async (postId: number, liked: boolean) => {
+    const user_id = localStorage.getItem('userId') || ''
+    if (!user_id) return
+    const url = liked ? `/api/posts/${postId}/unlike` : `/api/posts/${postId}/like`
+    await axios.post(url, { user_id })
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              likes: liked
+                ? (p.likes || []).filter((v) => v !== user_id)
+                : [...(p.likes || []), user_id],
+            }
+          : p,
+      ),
+    )
+  }
+
+  const loadComments = async (postId: number) => {
+    const res = await axios.get(`/api/posts/${postId}/comments`)
+    setComments((c) => ({ ...c, [postId]: res.data.comments || [] }))
+  }
+
+  const submitComment = async (postId: number) => {
+    const author_id = localStorage.getItem('userId') || ''
+    const content = commentText[postId]
+    if (!author_id || !content) return
+    await axios.post(`/api/posts/${postId}/comments`, { author_id, content })
+    setCommentText((t) => ({ ...t, [postId]: '' }))
+    loadComments(postId)
   }
 
   const doSearch = async () => {
@@ -99,6 +144,50 @@ export default function CommunityHome() {
                 {p.tags.map((t) => (
                   <span key={t}>#{t}</span>
                 ))}
+              </div>
+            )}
+            <div className="mt-2 flex gap-4 text-sm">
+              <button
+                className="underline"
+                onClick={() => handleLike(p.id, (p.likes || []).includes(localStorage.getItem('userId') || ''))}
+              >
+                いいね {p.likes ? p.likes.length : 0}
+              </button>
+              <button
+                className="underline"
+                onClick={() => {
+                  const show = showComments[p.id]
+                  if (!show) loadComments(p.id)
+                  setShowComments((s) => ({ ...s, [p.id]: !show }))
+                }}
+              >
+                コメント {comments[p.id]?.length || 0}
+              </button>
+            </div>
+            {showComments[p.id] && (
+              <div className="mt-2 space-y-2">
+                {(comments[p.id] || []).map((c) => (
+                  <div key={c.id} className="border-t pt-1 text-sm">
+                    <span className="text-gray-600 mr-2">{c.author_id}</span>
+                    {c.content}
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <input
+                    className="border flex-1 p-1 text-sm"
+                    value={commentText[p.id] || ''}
+                    onChange={(e) =>
+                      setCommentText((t) => ({ ...t, [p.id]: e.target.value }))
+                    }
+                    placeholder="コメントする"
+                  />
+                  <button
+                    className="bg-pink-500 text-white px-2"
+                    onClick={() => submitComment(p.id)}
+                  >
+                    送信
+                  </button>
+                </div>
               </div>
             )}
           </div>

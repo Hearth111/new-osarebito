@@ -9,6 +9,7 @@ app = FastAPI()
 
 DATA_FILE = Path(__file__).resolve().parent / "users.json"
 POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
+COMMENTS_FILE = Path(__file__).resolve().parent / "comments.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 
@@ -43,6 +44,18 @@ def load_posts():
 def save_posts(posts):
     with open(POSTS_FILE, "w", encoding="utf-8") as f:
         json.dump(posts, f, ensure_ascii=False, indent=2)
+
+
+def load_comments():
+    if COMMENTS_FILE.exists():
+        with open(COMMENTS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_comments(comments):
+    with open(COMMENTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(comments, f, ensure_ascii=False, indent=2)
 
 
 @app.post("/register")
@@ -113,6 +126,7 @@ class Post(BaseModel):
     author_id: str
     content: str
     tags: list[str] = []
+    likes: list[str] = []
     created_at: str
 
 
@@ -120,6 +134,19 @@ class PostCreate(BaseModel):
     author_id: str
     content: str
     tags: list[str] | None = None
+
+
+class Comment(BaseModel):
+    id: int
+    post_id: int
+    author_id: str
+    content: str
+    created_at: str
+
+
+class CommentCreate(BaseModel):
+    author_id: str
+    content: str
 
 
 def remove_password(user: dict) -> dict:
@@ -303,6 +330,7 @@ def create_post(post: PostCreate):
         "author_id": post.author_id,
         "content": post.content,
         "tags": post.tags or [],
+        "likes": [],
         "created_at": datetime.utcnow().isoformat(),
     }
     posts.append(item)
@@ -341,3 +369,78 @@ def popular_tags():
         for t in p.get("tags", []):
             counter[t] += 1
     return [{"name": t, "count": c} for t, c in counter.most_common(10)]
+
+
+# -------------------- Like API --------------------
+
+class LikeRequest(BaseModel):
+    user_id: str
+
+
+@app.post("/posts/{post_id}/like")
+def like_post(post_id: int, data: LikeRequest):
+    posts = load_posts()
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    likes = post.setdefault("likes", [])
+    if data.user_id not in likes:
+        likes.append(data.user_id)
+        save_posts(posts)
+    return {"likes": len(likes)}
+
+
+@app.post("/posts/{post_id}/unlike")
+def unlike_post(post_id: int, data: LikeRequest):
+    posts = load_posts()
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    likes = post.setdefault("likes", [])
+    if data.user_id in likes:
+        likes.remove(data.user_id)
+        save_posts(posts)
+    return {"likes": len(likes)}
+
+
+@app.get("/posts/{post_id}/likers")
+def list_likers(post_id: int):
+    posts = load_posts()
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    users = load_users()
+    result = [remove_password(u) for u in users if u["user_id"] in post.get("likes", [])]
+    return result
+
+
+# -------------------- Comment API --------------------
+
+
+@app.get("/posts/{post_id}/comments")
+def list_comments(post_id: int):
+    comments = load_comments()
+    post_comments = [c for c in comments if c["post_id"] == post_id]
+    return {"comments": post_comments}
+
+
+@app.post("/posts/{post_id}/comments")
+def create_comment(post_id: int, comment: CommentCreate):
+    posts = load_posts()
+    if not any(p["id"] == post_id for p in posts):
+        raise HTTPException(status_code=404, detail="Post not found")
+    users = load_users()
+    if not any(u["user_id"] == comment.author_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    comments = load_comments()
+    new_id = max([c["id"] for c in comments], default=0) + 1
+    item = {
+        "id": new_id,
+        "post_id": post_id,
+        "author_id": comment.author_id,
+        "content": comment.content,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    comments.append(item)
+    save_comments(comments)
+    return item
