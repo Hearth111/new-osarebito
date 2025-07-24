@@ -29,3 +29,7 @@ export const updatesWsUrl = BACKEND_URL.replace(/^http/, 'ws') + '/ws/updates'
 export const bookmarkPostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/bookmark`
 export const unbookmarkPostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/unbookmark`
 export const userBookmarksUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/bookmarks`
+export const sendMessageUrl = `${BACKEND_URL}/messages`
+export const messagesWithUrl = (userId: string, otherId: string) =>
+  `${BACKEND_URL}/messages/${userId}/with/${otherId}`
+export const notificationsUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/notifications`
