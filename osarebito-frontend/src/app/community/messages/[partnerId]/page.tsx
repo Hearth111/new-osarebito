@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useParams } from 'next/navigation'
-import { sendMessageUrl, messagesWithUrl } from '../../../../routs'
+import { sendMessageUrl } from '../../../../routs'
 
 interface Message {
   id: number
@@ -46,7 +46,7 @@ export default function MessagesWith() {
       }
     }
     return () => ws.close()
-  }, [partnerId])
+  }, [partnerId, myId])
 
   const send = async () => {
     if (!myId || !text) return

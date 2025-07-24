@@ -178,7 +178,7 @@ export default function CommunityHome() {
     loadComments(postId)
   }
 
-  const toggleBest = async (postId: number, commentId: number, current: boolean) => {
+  const toggleBest = async (postId: number, commentId: number) => {
     const user_id = localStorage.getItem('userId') || ''
     if (!user_id) return
     const res = await axios.put(bestAnswerUrl(postId), { comment_id: commentId, user_id })
@@ -325,7 +325,7 @@ export default function CommunityHome() {
                   {p.author_id === (typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '') && (
                     <button
                       className="ml-2 text-xs underline"
-                      onClick={() => toggleBest(p.id, c.id, p.best_answer_id === c.id)}
+                      onClick={() => toggleBest(p.id, c.id)}
                     >
                       {p.best_answer_id === c.id ? '取り消し' : 'ベスト'}
                     </button>

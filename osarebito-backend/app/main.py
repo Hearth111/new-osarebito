@@ -37,6 +37,12 @@ ROLE_REPORT_POINTS = {
     "お仕事人": 1,
 }
 
+TUTORIAL_TASKS = [
+    "プロフィールを設定する",
+    "最初の投稿をしてみよう",
+    "他のユーザーをフォローしよう",
+]
+
 
 class User(BaseModel):
     email: EmailStr
@@ -116,6 +122,7 @@ def register(user: User):
     users.append(
         {
             **user.dict(),
+            "created_at": datetime.utcnow().isoformat(),
             "profile": {},
             "collab_profile": {},
             "followers": [],
@@ -852,6 +859,24 @@ def get_notifications(user_id: str):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"notifications": user.get("notifications", [])}
+
+
+@app.get("/users/{user_id}/tutorial_tasks")
+def tutorial_tasks(user_id: str):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    created_at = user.get("created_at")
+    if not created_at:
+        return {"tasks": []}
+    try:
+        created = datetime.fromisoformat(created_at)
+    except Exception:
+        return {"tasks": []}
+    if datetime.utcnow() - created <= timedelta(days=7):
+        return {"tasks": TUTORIAL_TASKS}
+    return {"tasks": []}
 
 
 @app.websocket("/ws/updates")
