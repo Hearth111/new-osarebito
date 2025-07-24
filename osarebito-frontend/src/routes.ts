@@ -38,6 +38,8 @@ export const notificationsUrl = (userId: string) => `${BACKEND_URL}/users/${user
 export const reportPostUrl = (postId: number) => `${BACKEND_URL}/reports/post/${postId}`
 export const reportCommentUrl = (commentId: number) => `${BACKEND_URL}/reports/comment/${commentId}`
 export const trendingPostsUrl = `${BACKEND_URL}/trending_posts`
+export const postsByTagUrl = (tag: string) =>
+  `${BACKEND_URL}/posts/by_tag?tag=${encodeURIComponent(tag)}`
 export const tutorialTasksUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/tutorial_tasks`
 export const achievementsUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/achievements`
 export const jobsUrl = `${BACKEND_URL}/jobs`
