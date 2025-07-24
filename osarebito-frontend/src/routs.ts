@@ -33,3 +33,6 @@ export const sendMessageUrl = `${BACKEND_URL}/messages`
 export const messagesWithUrl = (userId: string, otherId: string) =>
   `${BACKEND_URL}/messages/${userId}/with/${otherId}`
 export const notificationsUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/notifications`
+export const reportPostUrl = (postId: number) => `${BACKEND_URL}/reports/post/${postId}`
+export const reportCommentUrl = (commentId: number) => `${BACKEND_URL}/reports/comment/${commentId}`
+export const trendingPostsUrl = `${BACKEND_URL}/trending_posts`

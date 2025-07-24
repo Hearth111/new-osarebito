@@ -161,6 +161,22 @@ export default function CommunityHome() {
     )
   }
 
+  const reportPost = async (postId: number) => {
+    const reporter_id = localStorage.getItem('userId') || ''
+    if (!reporter_id) return
+    const reason = window.prompt('通報理由を入力してください') || ''
+    await axios.post(`/api/reports/post/${postId}`, { reporter_id, reason })
+    alert('通報しました')
+  }
+
+  const reportComment = async (commentId: number) => {
+    const reporter_id = localStorage.getItem('userId') || ''
+    if (!reporter_id) return
+    const reason = window.prompt('通報理由を入力してください') || ''
+    await axios.post(`/api/reports/comment/${commentId}`, { reporter_id, reason })
+    alert('通報しました')
+  }
+
   const doSearch = async () => {
     if (!search) return
     const res = await axios.get(`/api/users/search?query=${encodeURIComponent(search)}`)
@@ -249,6 +265,9 @@ export default function CommunityHome() {
               >
                 {bookmarks.includes(p.id) ? 'ブックマーク済み' : 'ブックマーク'}
               </button>
+              <button className="underline" onClick={() => reportPost(p.id)}>
+                通報
+              </button>
             </div>
             {showComments[p.id] && (
               <div className="mt-2 space-y-2">
@@ -257,20 +276,23 @@ export default function CommunityHome() {
                     key={c.id}
                     className={`border-t pt-1 text-sm ${p.best_answer_id === c.id ? 'bg-yellow-50' : ''}`}
                   >
-                    <span className="text-gray-600 mr-2">{c.author_id}</span>
-                    {c.content}
-                    {p.best_answer_id === c.id && (
-                      <span className="ml-2 text-xs text-red-500">ベストアンサー</span>
-                    )}
-                    {p.author_id === (typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '') && (
-                      <button
-                        className="ml-2 text-xs underline"
-                        onClick={() => toggleBest(p.id, c.id, p.best_answer_id === c.id)}
-                      >
-                        {p.best_answer_id === c.id ? '取り消し' : 'ベスト'}
-                      </button>
-                    )}
-                  </div>
+                  <span className="text-gray-600 mr-2">{c.author_id}</span>
+                  {c.content}
+                  {p.best_answer_id === c.id && (
+                    <span className="ml-2 text-xs text-red-500">ベストアンサー</span>
+                  )}
+                  {p.author_id === (typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '') && (
+                    <button
+                      className="ml-2 text-xs underline"
+                      onClick={() => toggleBest(p.id, c.id, p.best_answer_id === c.id)}
+                    >
+                      {p.best_answer_id === c.id ? '取り消し' : 'ベスト'}
+                    </button>
+                  )}
+                  <button className="ml-2 text-xs underline" onClick={() => reportComment(c.id)}>
+                    通報
+                  </button>
+                </div>
                 ))}
                 <div className="flex gap-2">
                   <input
