@@ -39,3 +39,4 @@ export const reportPostUrl = (postId: number) => `${BACKEND_URL}/reports/post/${
 export const reportCommentUrl = (commentId: number) => `${BACKEND_URL}/reports/comment/${commentId}`
 export const trendingPostsUrl = `${BACKEND_URL}/trending_posts`
 export const tutorialTasksUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/tutorial_tasks`
+export const achievementsUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/achievements`
