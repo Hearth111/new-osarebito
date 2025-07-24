@@ -22,6 +22,10 @@ export default function CommunitySidebar() {
         <BellIcon className="w-5 h-5" />
         <span>通知</span>
       </Link>
+      <Link href="/community/bookmarks" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
+        <span className="w-5 h-5">🔖</span>
+        <span>ブックマーク</span>
+      </Link>
     </nav>
   )
 }

@@ -43,6 +43,7 @@ export default function CommunityHome() {
   const [comments, setComments] = useState<Record<number, Comment[]>>({})
   const [commentText, setCommentText] = useState<Record<number, string>>({})
   const [showComments, setShowComments] = useState<Record<number, boolean>>({})
+  const [bookmarks, setBookmarks] = useState<number[]>([])
 
   useEffect(() => {
     const ws = new WebSocket(updatesWsUrl)
@@ -86,6 +87,12 @@ export default function CommunityHome() {
       setTags(t.data)
     }
     loadSide()
+    const uid = localStorage.getItem('userId') || ''
+    if (uid) {
+      axios.get(`/api/users/${uid}/bookmarks`).then((res) => {
+        setBookmarks(res.data.posts.map((p: Post) => p.id))
+      })
+    }
   }, [])
 
   const submitPost = async () => {
@@ -114,6 +121,18 @@ export default function CommunityHome() {
             }
           : p,
       ),
+    )
+  }
+
+  const handleBookmark = async (postId: number, marked: boolean) => {
+    const user_id = localStorage.getItem('userId') || ''
+    if (!user_id) return
+    const url = marked
+      ? `/api/posts/${postId}/unbookmark`
+      : `/api/posts/${postId}/bookmark`
+    await axios.post(url, { user_id })
+    setBookmarks((b) =>
+      marked ? b.filter((id) => id !== postId) : [...b, postId],
     )
   }
 
@@ -194,7 +213,7 @@ export default function CommunityHome() {
           </button>
         </div>
         {posts.map((p) => (
-          <div key={p.id} className="border p-3 mb-3">
+          <div key={p.id} id={`post-${p.id}`} className="border p-3 mb-3">
             <div className="text-sm text-gray-600">{p.author_id}</div>
             {p.category && (
               <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
@@ -223,6 +242,12 @@ export default function CommunityHome() {
                 }}
               >
                 コメント {comments[p.id]?.length || 0}
+              </button>
+              <button
+                className="underline"
+                onClick={() => handleBookmark(p.id, bookmarks.includes(p.id))}
+              >
+                {bookmarks.includes(p.id) ? 'ブックマーク済み' : 'ブックマーク'}
               </button>
             </div>
             {showComments[p.id] && (
