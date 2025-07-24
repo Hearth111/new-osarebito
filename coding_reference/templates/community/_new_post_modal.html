@@ -1,0 +1,149 @@
+{# /app/templates/community/_new_post_modal.html #}
+{# 新規投稿と編集の両方に対応した汎用モーダルフォーム #}
+
+<div class="modal-header">
+  <h5 class="modal-title">{{ '投稿の編集' if is_edit_mode else '新しい投稿' }}</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<form
+  method="POST"
+  action="{{ url_for('community.edit_post', post_id=post.id) if is_edit_mode else url_for('community.new_post') }}"
+  enctype="multipart/form-data"
+  id="post-form"
+>
+  {{ form.hidden_tag() }}
+  
+  {# --- ▼▼▼ ここからが修正点です ▼▼▼ --- #}
+  <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+  {# --- ▲▲▲ ここまでが修正点です ▲▲▲ --- #}
+
+    <fieldset>
+      <div class="mb-3">
+        {{ form.content.label(class="form-label") }}
+        {{ form.content(class="form-control mentionable-textarea" + (" is-invalid" if form.content.errors else ""), rows="8", placeholder="本文を入力...") }}
+        {% if form.content.errors %}
+        <div class="invalid-feedback d-block">{{ form.content.errors[0] }}</div>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        {{ form.media_file.label(class="form-label") }}
+        {% if is_edit_mode and post.media_filename %}
+            <div class="mb-2">
+                <small class="text-muted">現在のメディア:</small>
+                {% if post.media_type == 'image' %}
+                    <img src="{{ url_for('static', filename='community_uploads/' + post.media_filename) }}" class="img-fluid rounded border" style="max-height: 100px;">
+                {% elif post.media_type == 'video' %}
+                    <video src="{{ url_for('static', filename='community_uploads/' + post.media_filename) }}" class="img-fluid rounded border" style="max-height: 100px;" controls></video>
+                {% else %}
+                     <span>{{ post.media_filename }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+        {{ form.media_file(class="form-control" + (" is-invalid" if form.media_file.errors else "")) }}
+        <div class="form-text">
+          画像または動画ファイル (jpg, png, mp4など) をアップロードできます。新しいファイルをアップロードすると、現在のメディアは上書きされます。
+        </div>
+        {% if form.media_file.errors %}
+        <div class="invalid-feedback d-block">{{ form.media_file.errors[0] }}</div>
+        {% endif %}
+      </div>
+    </fieldset>
+
+    <hr class="my-4" />
+
+    <div class="accordion" id="postOptionsAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOptions">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOptions" aria-expanded="false" aria-controls="collapseOptions">
+            オプション設定（カテゴリ、タグ、公開範囲など）
+          </button>
+        </h2>
+        <div id="collapseOptions" class="accordion-collapse collapse" aria-labelledby="headingOptions" data-bs-parent="#postOptionsAccordion">
+          <div class="accordion-body">
+            <fieldset>
+              <div class="mb-3">
+                {{ form.categories.label(class="form-label fw-bold") }}
+                <div class="border rounded p-2">
+                  {% for subfield in form.categories %}
+                  <div class="form-check form-check-inline">
+                    {{ subfield(class="form-check-input") }}
+                    {{ subfield.label(class="form-check-label") }}
+                  </div>
+                  {% endfor %}
+                </div>
+                {% if form.categories.errors %}
+                  {% for error in form.categories.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                {{ form.tags.label(class="form-label fw-bold") }}
+                {{ form.tags(class="form-control" + (" is-invalid" if form.tags.errors else ""), placeholder="例: #イラスト募集 #Live2D") }}
+                {% if form.tags.errors %}
+                  {% for error in form.tags.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  {{ form.visibility.label(class="form-label fw-bold") }}
+                  <div class="border rounded p-2" id="visibility-options">
+                    {% for subfield in form.visibility %}
+                    <div class="form-check">
+                      {{ subfield(class="form-check-input", **{'data-bs-toggle': 'collapse', 'data-bs-target': '#accessible-users-container' if subfield.data == 'private' else ''}) }}
+                      {{ subfield.label(class="form-check-label") }}
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  {{ form.comment_permission.label(class="form-label fw-bold") }}
+                  <div class="border rounded p-2">
+                    {% for subfield in form.comment_permission %}
+                    <div class="form-check">
+                      {{ subfield(class="form-check-input") }}
+                      {{ subfield.label(class="form-check-label") }}
+                    </div>
+                    {% endfor %}
+                  </div>
+                   {% if form.comment_permission.errors %}
+                    {% for error in form.comment_permission.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="mb-3 collapse" id="accessible-users-container">
+                {{ form.accessible_users.label(class="form-label fw-bold") }}
+                {{ form.accessible_users(class="form-control", rows="2") }}
+                <div class="form-text">閲覧を許可するユーザーのユーザー名を、カンマ（,）で区切って入力してください。</div>
+              </div>
+
+              <div class="form-check mb-2">
+                {{ form.is_anonymous(class="form-check-input") }}
+                {{ form.is_anonymous.label(class="form-check-label") }}
+              </div>
+              <div class="form-check">
+                {{ form.is_adult(class="form-check-input") }}
+                {{ form.is_adult.label(class="form-check-label") }}
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+  <div class="modal-footer">
+    {{ form.submit_draft(class="btn btn-outline-secondary me-auto") }}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+    {{ form.submit_publish(class="btn btn-primary") }}
+  </div>
+</form>

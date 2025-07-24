@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h4 mb-0">新しい投稿を作成する</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ post_form.hidden_tag() }}
+
+                        <fieldset>
+                            <legend class="h6">投稿内容</legend>
+                            <div class="mb-3">
+                                {{ post_form.title.label(class="form-label") }}
+                                {{ post_form.title(class="form-control" + (" is-invalid" if post_form.title.errors else "")) }}
+                                {% if post_form.title.errors %}
+                                    <div class="invalid-feedback">{{ post_form.title.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ post_form.content.label(class="form-label") }}
+                                {{ post_form.content(class="form-control" + (" is-invalid" if post_form.content.errors else ""), rows="8") }}
+                                {% if post_form.content.errors %}
+                                    <div class="invalid-feedback">{{ post_form.content.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ post_form.media_file.label(class="form-label") }}
+                                {{ post_form.media_file(class="form-control" + (" is-invalid" if post_form.media_file.errors else "")) }}
+                                <div class="form-text">画像または動画ファイル (jpg, png, mp4など) をアップロードできます。</div>
+                                {% if post_form.media_file.errors %}
+                                    <div class="invalid-feedback">{{ post_form.media_file.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="form-check mb-3">
+                                {{ post_form.is_adult(class="form-check-input") }}
+                                {{ post_form.is_adult.label(class="form-check-label") }}
+                            </div>
+                        </fieldset>
+
+                        <hr class="my-4">
+
+                        <fieldset id="new-post-app">
+                            <div class="form-check mb-3">
+                                {{ post_form.add_poll.label(class="form-check-label", for="addPollCheck") }}
+                                {{ post_form.add_poll(class="form-check-input", id="addPollCheck", **{'v-model': 'addPoll'}) }}
+                            </div>
+
+                            <div id="poll-form-fields" v-show="addPoll">
+                                {{ poll_form.hidden_tag() }}
+                                <div class="mb-3">
+                                    {{ poll_form.question.label(class="form-label") }}
+                                    {{ poll_form.question(class="form-control") }}
+                                </div>
+                                <div>
+                                    {{ poll_form.choices.label(class="form-label") }}
+                                    {% for choice_field in poll_form.choices %}
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">{{ loop.index }}</span>
+                                            {# --- 【修正点】 'choice_field.description' を 'choice_field.text' に変更 --- #}
+                                            {{ choice_field.text(class="form-control", placeholder="選択肢" + loop.index|string) }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            {{ post_form.submit_draft(class="btn btn-outline-secondary") }}
+                            {{ post_form.submit_publish(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/new_post_vue.js') }}"></script>
+{% endblock %}

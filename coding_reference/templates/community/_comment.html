@@ -1,0 +1,49 @@
+<div id="comment-{{ comment.id }}" class="comment-thread mb-3">
+    <div class="d-flex align-items-start">
+        <div class="flex-shrink-0">
+            {# --- 【ここからが修正箇所です】 --- #}
+            {% if comment.post.is_anonymous %}
+                <img src="{{ url_for('static', filename='profile_pics/default_anonymous.png') }}" class="rounded-circle" width="40" height="40" alt="匿名ユーザー">
+            {% else %}
+                <a href="{{ url_for('profile.user_profile', username=comment.author.username) }}">
+                    <img src="{{ url_for('static', filename='profile_pics/' + comment.author.profile.image_file) }}" class="rounded-circle" width="40" height="40" alt="{{ comment.author.username }}">
+                </a>
+            {% endif %}
+            {# --- 修正ここまで --- #}
+        </div>
+        <div class="ms-3 flex-grow-1">
+            <div class="bg-light rounded p-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">
+                        {# --- 【ここからが修正箇所です】 --- #}
+                        {% if comment.post.is_anonymous %}
+                            匿名さん
+                        {% else %}
+                             <a href="{{ url_for('profile.user_profile', username=comment.author.username) }}" class="text-dark text-decoration-none">{{ comment.author.username }}</a>
+                        {% endif %}
+                        {# --- 修正ここまで --- #}
+                    </span>
+                    <small class="text-muted">{{ (comment.created_at | jst).strftime('%m/%d %H:%M') }}</small>
+                </div>
+                <div class="comment-content mt-1">{{ comment.content | format_content | bleach | safe }}</div>
+            </div>
+            <div class="comment-actions mt-1">
+                {# --- 【ここからが修正箇所です】 --- #}
+                <button class="btn btn-sm btn-link text-muted reply-button"
+                        data-comment-id="{{ comment.id }}"
+                        data-username="{{ '匿名さん' if comment.post.is_anonymous else comment.author.username }}">
+                    返信
+                </button>
+                {# --- 修正ここまで --- #}
+            </div>
+        </div>
+    </div>
+    <div class="replies ms-4 ps-3 border-start mt-2">
+        {% if comment.replies %}
+            {% for reply in comment.replies | sort(attribute='created_at') %}
+                {# 'with context' は不要な場合が多いため削除 #}
+                {% include 'community/_comment.html' %}
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>

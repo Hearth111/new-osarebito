@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ super() }}{% endblock %}
+
+{% block styles %}
+{# このブロックは空にするか、ブロックごと削除してください #}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header"><h2 class="h4 mb-0">投稿の編集</h2></div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="editPostForm">
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-3">
+                            {{ form.content.label(class="form-label fw-bold") }}
+                            
+                            <div id="edit-post-editor" contenteditable="true" class="form-control" style="min-height: 200px;"></div>
+                            {{ form.content(class="d-none") }}
+                            <div class="form-text small">URLは自動でリンクになります。</div>
+                            {% for error in form.content.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.media_file.label(class="form-label fw-bold") }}
+                            {% if post.media_filename %}
+                            <div class="mb-2">
+                                <small class="text-muted">現在のメディア:</small>
+                                {% if post.media_type == 'image' %}<img src="{{ url_for('static', filename='community_uploads/' + post.media_filename) }}" class="img-fluid rounded border" style="max-height: 150px;">
+                                {% elif post.media_type == 'video' %}<video src="{{ url_for('static', filename='community_uploads/' + post.media_filename) }}" class="img-fluid rounded border" style="max-height: 150px;" controls></video>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            {{ form.media_file(class="form-control") }}
+                            <div class="form-text">新しいファイルをアップロードすると、現在のメディアは上書きされます。</div>
+                            {% for error in form.media_file.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.categories.label(class="form-label fw-bold") }}
+                            <div class="border rounded p-2">
+                                {% for subfield in form.categories %}<div class="form-check form-check-inline">
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>{% endfor %}
+                            </div>
+                            {% for error in form.categories.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.tags.label(class="form-label fw-bold") }}
+                            {{ form.tags(class="form-control") }}
+                            {% for error in form.tags.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.comment_permission.label(class="form-label fw-bold") }}
+                            <div class="border rounded p-2">
+                            {% for subfield in form.comment_permission %}<div class="form-check">
+                                {{ subfield(class="form-check-input") }}
+                                {{ subfield.label(class="form-check-label") }}
+                            </div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <div id="edit-post-app">
+                            <div class="mb-3">
+                                {{ form.visibility.label(class="form-label fw-bold") }}
+                                <div class="border rounded p-2" id="visibility-options">
+                                {% for subfield in form.visibility %}<div class="form-check">
+                                    {{ subfield(class="form-check-input", **{'v-model': 'visibility'}) }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>{% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3" id="accessible-users-container" v-show="visibility === 'private'">
+                                {{ form.accessible_users.label(class="form-label fw-bold") }}
+                                {{ form.accessible_users(class="form-control", rows="3") }}
+                                <div class="form-text">閲覧を許可するユーザーのユーザー名を、カンマ（,）で区切って入力してください。</div>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            {{ form.is_adult(class="form-check-input", disabled=not current_user.show_adult_content) }}
+                            {{ form.is_adult.label(class="form-check-label") }}
+                             {% if not current_user.show_adult_content %}
+                                <div class="form-text text-danger small">
+                                    <i class="bi bi-exclamation-circle-fill"></i> 成人向けコンテンツを投稿・編集するには、まず設定ページで「成人向けコンテンツを表示する」を有効にしてください。
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-check mb-4">
+                            {{ form.is_anonymous(class="form-check-input") }}
+                            {{ form.is_anonymous.label(class="form-check-label") }}
+                        </div>
+                    </form>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <form action="{{ url_for('community.delete_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('本当にこの投稿を削除しますか？\n関連するコメントもすべて削除されます。');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-outline-danger">この投稿を削除</button>
+                        </form>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('community.post_detail', post_id=post.id) }}" class="btn btn-secondary">キャンセル</a>
+                            <button type="submit" form="editPostForm" name="{{ form.submit_draft.name }}" value="{{ form.submit_draft.label.text }}" class="btn btn-outline-secondary">{{ form.submit_draft.label.text }}</button>
+                            <button type="submit" form="editPostForm" name="{{ form.submit_publish.name }}" value="更新して公開" class="btn btn-primary">更新して公開</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/edit_post_vue.js') }}"></script>
+{% endblock %}

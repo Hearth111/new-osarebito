@@ -1,0 +1,99 @@
+{% macro post_form(form, action_url, title, submit_text) %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <h2 class="card-title text-center mb-4">{{ title }}</h2>
+        <form method="POST" action="{{ action_url }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                {% if form.title.errors %}
+                    <div class="invalid-feedback">{{ form.title.errors[0] }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.content.label(class="form-label") }}
+                {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), rows="10") }}
+                
+                {# --- ここに追加 --- #}
+                <div id="mention-suggestions-post" class="list-group position-absolute" style="display: none; z-index: 1050;"></div>
+
+                {% if form.content.errors %}
+                    <div class="invalid-feedback">{{ form.content.errors[0] }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid mt-4">
+                {{ form.submit(class="btn btn-primary", value=submit_text) }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro comment_form(form, post_id) %}
+<form method="POST" action="{{ url_for('community.post_detail', post_id=post_id) }}" class="mt-4" id="comment-form">
+    {{ form.hidden_tag() }}
+    {{ form.parent_id(id="comment_form_parent_id") }}
+    <div class="mb-3">
+        {{ form.content.label(class="form-label") }}
+        {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), rows="3", id="comment_form_content", placeholder="コメントを追加...") }}
+        
+        {# --- ここに追加 --- #}
+        <div id="mention-suggestions-comment" class="list-group position-absolute" style="display: none; z-index: 1050;"></div>
+        
+        {% if form.content.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.content.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="d-flex justify-content-end">
+        {{ form.submit_comment(class="btn btn-primary btn-sm") }}
+    </div>
+</form>
+{% endmacro %}
+
+
+{# === ここからが追加するマクロです === #}
+{% macro render_comment_thread(comments, post_author_id, comment_form, current_user, post) %}
+    {% for comment in comments %}
+        <div class="comment-thread mb-3" id="comment-{{ comment.id }}">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <a href="{{ url_for('profile.user_profile', username=comment.author.username) }}">
+                        <img src="{{ url_for('static', filename='profile_pics/' + comment.author.profile.image_file) }}" class="rounded-circle" width="40" height="40" alt="{{ comment.author.username }}">
+                    </a>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('profile.user_profile', username=comment.author.username) }}" class="fw-bold text-dark text-decoration-none">{{ comment.author.username }}</a>
+                            {% if comment.author_id == post_author_id %}
+                                <span class="badge bg-primary rounded-pill fw-normal ms-1">投稿者</span>
+                            {% endif %}
+                            <small class="text-muted ms-2">{{ (comment.created_at | jst).strftime('%Y/%m/%d %H:%M') }}</small>
+                        </div>
+                    </div>
+                    <div class="comment-content mt-1">{{ comment.content | format_content | bleach | safe }}</div>
+                    <div class="comment-actions mt-1">
+                        {% if current_user.is_authenticated and not current_user.is_banned %}
+                            <a href="#" class="text-muted text-decoration-none small reply-button" data-comment-id="{{ comment.id }}" data-username="{{ comment.author.username }}">返信する</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if comment.replies %}
+                <div class="replies ms-4 mt-3 ps-3 border-start">
+                    {{ render_comment_thread(comment.replies, post_author_id, comment_form, current_user, post) }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endmacro %}
