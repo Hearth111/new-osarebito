@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
+import { updatesWsUrl } from '../../routs'
 
 interface Post {
   id: number
@@ -36,6 +37,27 @@ export default function CommunityHome() {
   const [comments, setComments] = useState<Record<number, Comment[]>>({})
   const [commentText, setCommentText] = useState<Record<number, string>>({})
   const [showComments, setShowComments] = useState<Record<number, boolean>>({})
+
+  useEffect(() => {
+    const ws = new WebSocket(updatesWsUrl)
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data)
+        if (msg.type === 'new_post') {
+          setPosts((p) => [msg.post, ...p])
+        } else if (msg.type === 'like') {
+          setPosts((p) =>
+            p.map((post) =>
+              post.id === msg.post_id ? { ...post, likes: msg.likes } : post,
+            ),
+          )
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return () => ws.close()
+  }, [])
 
   const fetchPosts = async (f: string) => {
     const params = new URLSearchParams({ feed: f })
