@@ -20,3 +20,7 @@ export const postsUrl = (feed: string, userId?: string) => {
 export const createPostUrl = `${BACKEND_URL}/posts`
 export const recommendedUsersUrl = `${BACKEND_URL}/recommended_users`
 export const popularTagsUrl = `${BACKEND_URL}/popular_tags`
+export const likePostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/like`
+export const unlikePostUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/unlike`
+export const postLikersUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/likers`
+export const postCommentsUrl = (postId: number) => `${BACKEND_URL}/posts/${postId}/comments`
