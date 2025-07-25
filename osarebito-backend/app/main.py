@@ -1,9 +1,20 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, EmailStr
-import json
-from pathlib import Path
 from datetime import datetime, timedelta
 from collections import Counter
+
+from .db import (
+    load_table,
+    save_table,
+    users_table,
+    posts_table,
+    comments_table,
+    messages_table,
+    reports_table,
+    jobs_table,
+    groups_table,
+    group_messages_table,
+)
 
 app = FastAPI()
 
@@ -23,14 +34,6 @@ async def broadcast(message: dict) -> None:
         connections.discard(ws)
 
 
-DATA_FILE = Path(__file__).resolve().parent / "users.json"
-POSTS_FILE = Path(__file__).resolve().parent / "posts.json"
-COMMENTS_FILE = Path(__file__).resolve().parent / "comments.json"
-MESSAGES_FILE = Path(__file__).resolve().parent / "messages.json"
-REPORTS_FILE = Path(__file__).resolve().parent / "reports.json"
-JOBS_FILE = Path(__file__).resolve().parent / "jobs.json"
-GROUPS_FILE = Path(__file__).resolve().parent / "groups.json"
-GROUP_MESSAGES_FILE = Path(__file__).resolve().parent / "group_messages.json"
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 # reporting point weight by reporter role
@@ -67,99 +70,67 @@ class User(BaseModel):
 
 
 def load_users():
-    if DATA_FILE.exists():
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(users_table)
 
 
 def save_users(users):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, ensure_ascii=False, indent=2)
+    save_table(users_table, users, "user_id")
 
 
 def load_posts():
-    if POSTS_FILE.exists():
-        with open(POSTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(posts_table)
 
 
 def save_posts(posts):
-    with open(POSTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(posts, f, ensure_ascii=False, indent=2)
+    save_table(posts_table, posts, "id")
 
 
 def load_comments():
-    if COMMENTS_FILE.exists():
-        with open(COMMENTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(comments_table)
 
 
 def save_comments(comments):
-    with open(COMMENTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(comments, f, ensure_ascii=False, indent=2)
+    save_table(comments_table, comments, "id")
 
 
 def load_messages():
-    if MESSAGES_FILE.exists():
-        with open(MESSAGES_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(messages_table)
 
 
 def save_messages(messages):
-    with open(MESSAGES_FILE, "w", encoding="utf-8") as f:
-        json.dump(messages, f, ensure_ascii=False, indent=2)
+    save_table(messages_table, messages, "id")
 
 
 def load_reports():
-    if REPORTS_FILE.exists():
-        with open(REPORTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(reports_table)
 
 
 def save_reports(reports):
-    with open(REPORTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(reports, f, ensure_ascii=False, indent=2)
+    save_table(reports_table, reports, "id")
 
 
 def load_jobs():
-    if JOBS_FILE.exists():
-        with open(JOBS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(jobs_table)
 
 
 def save_jobs(jobs):
-    with open(JOBS_FILE, "w", encoding="utf-8") as f:
-        json.dump(jobs, f, ensure_ascii=False, indent=2)
+    save_table(jobs_table, jobs, "id")
 
 
 def load_groups():
-    if GROUPS_FILE.exists():
-        with open(GROUPS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(groups_table)
 
 
 def save_groups(groups):
-    with open(GROUPS_FILE, "w", encoding="utf-8") as f:
-        json.dump(groups, f, ensure_ascii=False, indent=2)
+    save_table(groups_table, groups, "id")
 
 
 def load_group_messages():
-    if GROUP_MESSAGES_FILE.exists():
-        with open(GROUP_MESSAGES_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    return load_table(group_messages_table)
 
 
 def save_group_messages(messages):
-    with open(GROUP_MESSAGES_FILE, "w", encoding="utf-8") as f:
-        json.dump(messages, f, ensure_ascii=False, indent=2)
+    save_table(group_messages_table, messages, "id")
 
 
 @app.post("/register")
