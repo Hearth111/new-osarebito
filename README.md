@@ -28,6 +28,9 @@ python run_backend.py  # 初回実行時に仮想環境を自動生成
 # Windows の場合
 run_backend.bat
 
+# PostgreSQL
+run_postgres.bat
+
 # フロントエンド
 npm --prefix osarebito-frontend run dev
 ```
