@@ -29,6 +29,9 @@ python run_backend.py  # 初回実行時に仮想環境を自動生成
 run_backend.bat
 
 # PostgreSQL
+python run_postgres.py
+
+# Windows の場合
 run_postgres.bat
 
 # フロントエンド
