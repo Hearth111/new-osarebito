@@ -3,21 +3,20 @@
 ## 概要
 
 このプロジェクトは FastAPI と Next.js を用いた SNS プラットフォームです。
-バックエンドのデータ保存方法を JSON ファイルから PostgreSQL へ移行しました。
+バックエンドのデータ保存方法を JSON ファイルから SQLite へ変更しました。
 
-## PostgreSQL への移行
+## SQLite への移行
 
 `osarebito-backend/migrate_json.py` を実行すると、従来の JSON ファイル
-（`osarebito-backend/app/*.json`）に保存されたデータを PostgreSQL にインポートできます。
-環境変数 `DATABASE_URL` で接続先を指定してください。
+（`osarebito-backend/app/*.json`）に保存されたデータを SQLite にインポートできます。
+環境変数 `DATABASE_URL` で接続先を指定できます。
 
 ```bash
 cd osarebito-backend
 python migrate_json.py
 ```
 
-デフォルトでは `postgresql+psycopg2://postgres:postgres@localhost/osarebito`
-に接続します。
+デフォルトでは `sqlite:///osarebito.db` に接続します。
 
 ## 起動方法
 
@@ -28,11 +27,6 @@ python run_backend.py  # 初回実行時に仮想環境を自動生成
 # Windows の場合
 run_backend.bat
 
-# PostgreSQL
-python run_postgres.py
-
-# Windows の場合
-run_postgres.bat
 
 # フロントエンド
 npm --prefix osarebito-frontend run dev
