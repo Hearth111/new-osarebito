@@ -222,27 +222,54 @@ export default function CommunityHome() {
       <div className="flex-1 max-w-2xl">
         <div className="mb-4 flex gap-2">
           <button
-            className={`px-3 py-1 rounded border shadow-sm transition-colors ${feed === 'all' ? 'bg-pink-500 text-white' : 'bg-white hover:bg-gray-50'}`}
-            onClick={() => setFeed('all')}
+            className={`px-3 py-1 rounded-full transition-colors ${feed === 'all' && !category ? 'bg-pink-500 text-white' : 'hover:bg-pink-100'}`}
+            onClick={() => {
+              setFeed('all')
+              setCategory('')
+            }}
           >
             すべて
           </button>
           <button
-            className={`px-3 py-1 rounded border shadow-sm transition-colors ${feed === 'following' ? 'bg-pink-500 text-white' : 'bg-white hover:bg-gray-50'}`}
-            onClick={() => setFeed('following')}
+            className={`px-3 py-1 rounded-full transition-colors ${feed === 'following' ? 'bg-pink-500 text-white' : 'hover:bg-pink-100'}`}
+            onClick={() => {
+              setFeed('following')
+              setCategory('')
+            }}
           >
             フォロー中
           </button>
-          <select className="border rounded px-2" value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">カテゴリ指定なし</option>
-            <option value="お悩み相談">お悩み相談</option>
-            <option value="コラボ募集">コラボ募集</option>
-            <option value="雑談">雑談</option>
-          </select>
+          <button
+            className={`px-3 py-1 rounded-full transition-colors ${category === '雑談' ? 'bg-pink-500 text-white' : 'hover:bg-pink-100'}`}
+            onClick={() => {
+              setFeed('all')
+              setCategory('雑談')
+            }}
+          >
+            雑談
+          </button>
+          <button
+            className={`px-3 py-1 rounded-full transition-colors ${category === 'コラボ募集' ? 'bg-pink-500 text-white' : 'hover:bg-pink-100'}`}
+            onClick={() => {
+              setFeed('all')
+              setCategory('コラボ募集')
+            }}
+          >
+            コラボ募集
+          </button>
+          <button
+            className={`px-3 py-1 rounded-full transition-colors ${category === 'お悩み相談' ? 'bg-pink-500 text-white' : 'hover:bg-pink-100'}`}
+            onClick={() => {
+              setFeed('all')
+              setCategory('お悩み相談')
+            }}
+          >
+            お悩み相談
+          </button>
         </div>
         <div className="mb-6 flex gap-2">
           <textarea
-            className="border rounded p-2 flex-1"
+            className="rounded p-2 flex-1 bg-white shadow"
             rows={3}
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
@@ -263,7 +290,7 @@ export default function CommunityHome() {
           </button>
         </div>
         {posts.map((p) => (
-          <div key={p.id} id={`post-${p.id}`} className="border rounded-lg bg-white p-4 shadow mb-4">
+          <div key={p.id} id={`post-${p.id}`} className="rounded-lg bg-white p-4 shadow mb-4">
             <div className="text-sm text-gray-600">{p.author_id}</div>
             {p.category && (
               <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
@@ -353,7 +380,7 @@ export default function CommunityHome() {
                 ))}
                 <div className="flex gap-2">
                   <input
-                    className="border rounded flex-1 p-1 text-sm"
+                    className="rounded flex-1 p-1 text-sm bg-white shadow"
                     value={commentText[p.id] || ''}
                     onChange={(e) =>
                       setCommentText((t) => ({ ...t, [p.id]: e.target.value }))
@@ -372,11 +399,11 @@ export default function CommunityHome() {
           </div>
         ))}
       </div>
-      <div className="w-64 space-y-6">
+      <div className="w-72 space-y-6 ml-auto">
         <div>
           <div className="flex gap-2 mb-2">
             <input
-              className="border rounded p-1 flex-1"
+              className="rounded p-1 flex-1 bg-white shadow"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ユーザー検索"
