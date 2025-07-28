@@ -61,6 +61,13 @@ group_messages_table = Table(
     Column("data", JSON, nullable=False),
 )
 
+fan_posts_table = Table(
+    "fan_posts",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("data", JSON, nullable=False),
+)
+
 metadata.create_all(engine)
 
 

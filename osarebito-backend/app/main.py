@@ -14,6 +14,7 @@ from .db import (
     jobs_table,
     groups_table,
     group_messages_table,
+    fan_posts_table,
 )
 
 app = FastAPI()
@@ -131,6 +132,14 @@ def load_group_messages():
 
 def save_group_messages(messages):
     save_table(group_messages_table, messages, "id")
+
+
+def load_fan_posts():
+    return load_table(fan_posts_table)
+
+
+def save_fan_posts(posts):
+    save_table(fan_posts_table, posts, "id")
 
 
 @app.post("/register")
@@ -298,6 +307,18 @@ class GroupMessage(BaseModel):
 class GroupMessageCreate(BaseModel):
     group_id: int
     sender_id: str
+    content: str
+
+
+class FanPost(BaseModel):
+    id: int
+    author_id: str
+    content: str
+    created_at: str
+
+
+class FanPostCreate(BaseModel):
+    author_id: str
     content: str
 
 
@@ -1136,6 +1157,42 @@ async def create_job(job: JobPostCreate):
     jobs.append(item)
     save_jobs(jobs)
     await broadcast({"type": "new_job", "job": item})
+    return item
+
+# -------------------- Fan Board API --------------------
+
+
+@app.get("/fan_posts")
+def list_fan_posts(viewer_id: str):
+    users = load_users()
+    viewer = next((u for u in users if u["user_id"] == viewer_id), None)
+    if not viewer:
+        raise HTTPException(status_code=404, detail="User not found")
+    if viewer.get("role") != "推し人":
+        raise HTTPException(status_code=403, detail="Only fans can view")
+    posts = load_fan_posts()
+    posts.sort(key=lambda x: x["id"], reverse=True)
+    return {"posts": posts}
+
+
+@app.post("/fan_posts")
+def create_fan_post(post: FanPostCreate):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == post.author_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.get("role") != "推し人":
+        raise HTTPException(status_code=403, detail="Only fans can post")
+    posts = load_fan_posts()
+    new_id = max([p["id"] for p in posts], default=0) + 1
+    item = {
+        "id": new_id,
+        "author_id": post.author_id,
+        "content": post.content,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    posts.append(item)
+    save_fan_posts(posts)
     return item
 
 
