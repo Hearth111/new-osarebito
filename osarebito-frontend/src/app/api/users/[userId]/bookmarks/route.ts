@@ -3,8 +3,9 @@ import type { NextRequest } from 'next/server'
 import { userBookmarksUrl } from '@/routes'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export async function GET(req: NextRequest, { params }: { params: any }) {
+export async function GET(req: NextRequest, context: { params: any }) {
   try {
+    const { params } = await context
     const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId
     const res = await fetch(userBookmarksUrl(userId))
     const body = await res.json()
