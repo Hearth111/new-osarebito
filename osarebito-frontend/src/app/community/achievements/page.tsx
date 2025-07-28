@@ -20,9 +20,11 @@ export default function CommunityAchievements() {
       {achievements.length === 0 ? (
         <p>まだ実績はありません。</p>
       ) : (
-        <ul className="list-disc pl-4 space-y-1">
+        <ul className="space-y-2">
           {achievements.map((a) => (
-            <li key={a}>{a}</li>
+            <li key={a} className="border rounded-lg bg-white p-2 shadow text-sm">
+              {a}
+            </li>
           ))}
         </ul>
       )}

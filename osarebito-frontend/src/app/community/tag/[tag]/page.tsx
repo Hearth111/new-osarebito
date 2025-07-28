@@ -28,7 +28,7 @@ export default function TagPostsPage() {
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">#{tag} の投稿</h1>
       {posts.map((p) => (
-        <div key={p.id} className="border p-2">
+        <div key={p.id} className="border rounded-lg bg-white p-3 shadow">
           <div className="text-sm text-gray-600">{p.author_id}</div>
           {p.category && (
             <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>

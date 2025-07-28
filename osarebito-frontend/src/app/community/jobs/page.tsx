@@ -57,39 +57,39 @@ export default function CommunityJobs() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold">依頼掲示板</h1>
-      <div className="space-y-2 border p-3">
+      <div className="space-y-2 border rounded-lg bg-white p-3 shadow">
         <input
-          className="border p-1 w-full"
+          className="border rounded p-1 w-full"
           placeholder="タイトル"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
-          className="border p-1 w-full"
+          className="border rounded p-1 w-full"
           rows={3}
           placeholder="依頼内容"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
         <input
-          className="border p-1 w-full"
+          className="border rounded p-1 w-full"
           placeholder="報酬 (任意)"
           value={reward}
           onChange={(e) => setReward(e.target.value)}
         />
         <input
-          className="border p-1 w-full"
+          className="border rounded p-1 w-full"
           placeholder="締切 (任意)"
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
         />
-        <button className="bg-pink-500 text-white px-3" onClick={submit}>
+        <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-3 transition" onClick={submit}>
           投稿
         </button>
       </div>
       <div className="space-y-4">
         {jobs.map((j) => (
-          <div key={j.id} className="border p-3">
+          <div key={j.id} className="border rounded-lg bg-white p-4 shadow">
             <div className="text-sm text-gray-600">{j.author_id}</div>
             <h2 className="font-semibold">{j.title}</h2>
             <p className="whitespace-pre-wrap">{j.description}</p>

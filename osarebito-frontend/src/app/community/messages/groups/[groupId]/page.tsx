@@ -42,7 +42,7 @@ export default function GroupChat() {
   return (
     <div className="p-4 max-w-md mx-auto space-y-2">
       <h1 className="text-xl font-bold mb-2">グループ {gid}</h1>
-      <div className="border p-2 h-64 overflow-y-auto space-y-1">
+      <div className="border rounded-lg bg-white p-2 h-64 overflow-y-auto space-y-1 shadow">
         {messages.map((m) => (
           <div key={m.id} className="text-sm">
             <span className="mr-2 text-gray-600">{m.sender_id}:</span>
@@ -51,8 +51,8 @@ export default function GroupChat() {
         ))}
       </div>
       <div className="flex gap-2">
-        <input className="border flex-1 p-1" value={text} onChange={(e) => setText(e.target.value)} placeholder="メッセージ" />
-        <button className="bg-pink-500 text-white px-3" onClick={send}>
+        <input className="border rounded flex-1 p-1" value={text} onChange={(e) => setText(e.target.value)} placeholder="メッセージ" />
+        <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-3 transition" onClick={send}>
           送信
         </button>
       </div>

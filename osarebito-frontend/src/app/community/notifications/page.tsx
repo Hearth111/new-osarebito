@@ -28,7 +28,7 @@ export default function CommunityNotifications() {
       ) : (
         <ul className="space-y-2">
           {notes.map((n, idx) => (
-            <li key={idx} className="text-sm">
+            <li key={idx} className="text-sm border rounded-lg bg-white p-2 shadow">
               {n.type === 'message' && n.from ? (
                 <span>{n.from} からメッセージが届きました。</span>
               ) : n.type === 'follow' && n.from ? (
