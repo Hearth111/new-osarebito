@@ -218,37 +218,37 @@ export default function CommunityHome() {
   }
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-6">
       <div className="flex-1 max-w-2xl">
         <div className="mb-4 flex gap-2">
           <button
-            className={`px-3 py-1 border ${feed === 'all' ? 'bg-pink-500 text-white' : ''}`}
+            className={`px-3 py-1 rounded border shadow-sm transition-colors ${feed === 'all' ? 'bg-pink-500 text-white' : 'bg-white hover:bg-gray-50'}`}
             onClick={() => setFeed('all')}
           >
             すべて
           </button>
           <button
-            className={`px-3 py-1 border ${feed === 'following' ? 'bg-pink-500 text-white' : ''}`}
+            className={`px-3 py-1 rounded border shadow-sm transition-colors ${feed === 'following' ? 'bg-pink-500 text-white' : 'bg-white hover:bg-gray-50'}`}
             onClick={() => setFeed('following')}
           >
             フォロー中
           </button>
-          <select className="border" value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select className="border rounded px-2" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">カテゴリ指定なし</option>
             <option value="お悩み相談">お悩み相談</option>
             <option value="コラボ募集">コラボ募集</option>
             <option value="雑談">雑談</option>
           </select>
         </div>
-        <div className="mb-4 flex gap-2">
+        <div className="mb-6 flex gap-2">
           <textarea
-            className="border p-2 flex-1"
+            className="border rounded p-2 flex-1"
             rows={3}
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="いまどうしてる？"
           />
-          <select className="border" value={newCategory} onChange={(e) => setNewCategory(e.target.value)}>
+          <select className="border rounded px-2" value={newCategory} onChange={(e) => setNewCategory(e.target.value)}>
             <option value="">カテゴリなし</option>
             <option value="お悩み相談">お悩み相談</option>
             <option value="コラボ募集">コラボ募集</option>
@@ -258,12 +258,12 @@ export default function CommunityHome() {
             <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
             匿名
           </label>
-          <button className="bg-pink-500 text-white px-4" onClick={submitPost}>
+          <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-4 transition" onClick={submitPost}>
             投稿
           </button>
         </div>
         {posts.map((p) => (
-          <div key={p.id} id={`post-${p.id}`} className="border p-3 mb-3">
+          <div key={p.id} id={`post-${p.id}`} className="border rounded-lg bg-white p-4 shadow mb-4">
             <div className="text-sm text-gray-600">{p.author_id}</div>
             {p.category && (
               <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
@@ -353,7 +353,7 @@ export default function CommunityHome() {
                 ))}
                 <div className="flex gap-2">
                   <input
-                    className="border flex-1 p-1 text-sm"
+                    className="border rounded flex-1 p-1 text-sm"
                     value={commentText[p.id] || ''}
                     onChange={(e) =>
                       setCommentText((t) => ({ ...t, [p.id]: e.target.value }))
@@ -361,7 +361,7 @@ export default function CommunityHome() {
                     placeholder="コメントする"
                   />
                   <button
-                    className="bg-pink-500 text-white px-2"
+                    className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition"
                     onClick={() => submitComment(p.id)}
                   >
                     送信
@@ -376,12 +376,12 @@ export default function CommunityHome() {
         <div>
           <div className="flex gap-2 mb-2">
             <input
-              className="border p-1 flex-1"
+              className="border rounded p-1 flex-1"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ユーザー検索"
             />
-            <button className="bg-pink-500 text-white px-2" onClick={doSearch}>
+            <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition" onClick={doSearch}>
               検索
             </button>
           </div>

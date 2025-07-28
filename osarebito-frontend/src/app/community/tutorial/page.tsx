@@ -19,9 +19,11 @@ export default function CommunityTutorial() {
       {tasks.length === 0 ? (
         <p>チュートリアルタスクはありません。</p>
       ) : (
-        <ul className="list-disc pl-6 space-y-1">
+        <ul className="space-y-2">
           {tasks.map((t, idx) => (
-            <li key={idx}>{t}</li>
+            <li key={idx} className="border rounded-lg bg-white p-2 shadow text-sm">
+              {t}
+            </li>
           ))}
         </ul>
       )}

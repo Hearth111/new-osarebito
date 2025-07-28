@@ -37,7 +37,7 @@ export default function GroupsIndex() {
       <h1 className="text-xl font-bold">グループチャット</h1>
       <div className="space-y-2">
         {groups.map((g) => (
-          <div key={g.id} className="border p-2">
+          <div key={g.id} className="border rounded-lg bg-white p-3 shadow">
             <Link href={`/community/groups/${g.id}`} className="underline text-pink-500">
               {g.name}
             </Link>
@@ -48,18 +48,18 @@ export default function GroupsIndex() {
       <div className="mt-4 space-y-2">
         <h2 className="font-semibold">新規作成</h2>
         <input
-          className="border p-1 w-full"
+          className="border rounded p-1 w-full"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="グループ名"
         />
         <input
-          className="border p-1 w-full"
+          className="border rounded p-1 w-full"
           value={members}
           onChange={(e) => setMembers(e.target.value)}
           placeholder="メンバーのユーザーIDをカンマ区切りで入力"
         />
-        <button className="bg-pink-500 text-white px-3" onClick={create}>
+        <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-3 transition" onClick={create}>
           作成
         </button>
       </div>

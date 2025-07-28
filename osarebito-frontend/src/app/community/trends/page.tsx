@@ -46,7 +46,7 @@ export default function CommunityTrends() {
       <section>
         <h2 className="font-semibold mb-2">人気投稿</h2>
         {posts.map((p) => (
-          <div key={p.id} className="border p-2 mb-2">
+          <div key={p.id} className="border rounded-lg bg-white p-3 mb-3 shadow">
             <div className="text-sm text-gray-600">{p.author_id}</div>
             <p>{p.content}</p>
             <div className="text-xs text-gray-600 mt-1 flex items-center gap-4">

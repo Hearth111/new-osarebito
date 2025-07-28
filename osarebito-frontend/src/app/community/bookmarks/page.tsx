@@ -26,7 +26,7 @@ export default function CommunityBookmarks() {
     <div>
       <h1 className="text-xl font-bold mb-4">ブックマーク一覧</h1>
       {posts.map((p) => (
-        <div key={p.id} className="border p-3 mb-3">
+        <div key={p.id} className="border rounded-lg bg-white p-4 shadow mb-3">
           <div className="text-sm text-gray-600">{p.author_id}</div>
           {p.category && (
             <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
