@@ -7,6 +7,8 @@ import {
   EnvelopeIcon,
   BriefcaseIcon,
   SparklesIcon,
+  UserGroupIcon,
+  BookmarkIcon,
 } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 
@@ -43,11 +45,11 @@ export default function CommunitySidebar() {
         <span>メッセージ</span>
       </Link>
       <Link href="/community/groups" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
-        <span className="w-5 h-5">👥</span>
+        <UserGroupIcon className="w-5 h-5" />
         <span>グループ</span>
       </Link>
       <Link href="/community/bookmarks" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
-        <span className="w-5 h-5">🔖</span>
+        <BookmarkIcon className="w-5 h-5" />
         <span>ブックマーク</span>
       </Link>
       <Link href="/community/jobs" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
