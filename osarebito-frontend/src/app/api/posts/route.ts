@@ -4,9 +4,10 @@ import { postsUrl, createPostUrl } from '@/routes'
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const feed = searchParams.get('feed') || 'all'
-    const user_id = searchParams.get('user_id') || undefined
-    const url = postsUrl(feed, user_id || undefined)
+  const feed = searchParams.get('feed') || 'all'
+  const user_id = searchParams.get('user_id') || undefined
+  const category = searchParams.get('category') || undefined
+  const url = postsUrl(feed, user_id || undefined, category || undefined)
     const res = await fetch(url)
     const body = await res.json()
     if (!res.ok) {
