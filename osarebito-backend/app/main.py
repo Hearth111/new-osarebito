@@ -15,6 +15,7 @@ from .db import (
     groups_table,
     group_messages_table,
     fan_posts_table,
+    appeals_table,
 )
 
 app = FastAPI()
@@ -140,6 +141,14 @@ def load_fan_posts():
 
 def save_fan_posts(posts):
     save_table(fan_posts_table, posts, "id")
+
+
+def load_appeals():
+    return load_table(appeals_table)
+
+
+def save_appeals(appeals):
+    save_table(appeals_table, appeals, "id")
 
 
 @app.post("/register")
@@ -320,6 +329,19 @@ class FanPost(BaseModel):
 class FanPostCreate(BaseModel):
     author_id: str
     content: str
+
+
+class Appeal(BaseModel):
+    id: int
+    user_id: str
+    message: str
+    status: str
+    created_at: str
+
+
+class AppealCreate(BaseModel):
+    user_id: str
+    message: str
 
 
 def remove_password(user: dict) -> dict:
@@ -1194,6 +1216,67 @@ def create_fan_post(post: FanPostCreate):
     posts.append(item)
     save_fan_posts(posts)
     return item
+
+# -------------------- Appeal API --------------------
+
+
+@app.post("/appeals")
+def create_appeal(appc: AppealCreate):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == appc.user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not is_semibanned(user):
+        raise HTTPException(status_code=400, detail="Not semibanned")
+    appeals = load_appeals()
+    if any(a["user_id"] == appc.user_id and a["status"] == "pending" for a in appeals):
+        raise HTTPException(status_code=400, detail="Already appealed")
+    new_id = max([a["id"] for a in appeals], default=0) + 1
+    item = {
+        "id": new_id,
+        "user_id": appc.user_id,
+        "message": appc.message,
+        "status": "pending",
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    appeals.append(item)
+    save_appeals(appeals)
+    return item
+
+
+class AppealResolveRequest(BaseModel):
+    action: str
+    resolver_id: str
+
+
+@app.post("/appeals/{appeal_id}/resolve")
+def resolve_appeal(appeal_id: int, req: AppealResolveRequest):
+    appeals = load_appeals()
+    appeal = next((a for a in appeals if a["id"] == appeal_id), None)
+    if not appeal:
+        raise HTTPException(status_code=404, detail="Appeal not found")
+    if appeal.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Already resolved")
+    action = req.action.lower()
+    if action not in {"approve", "reject"}:
+        raise HTTPException(status_code=400, detail="Invalid action")
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == appeal["user_id"]), None)
+    if action == "approve" and user:
+        appeal["status"] = "approved"
+        user["semiban_until"] = None
+        save_users(users)
+    elif action == "reject":
+        appeal["status"] = "rejected"
+    save_appeals(appeals)
+    return {"message": appeal["status"]}
+
+
+@app.get("/appeals")
+def list_appeals():
+    appeals = load_appeals()
+    appeals.sort(key=lambda x: x["id"], reverse=True)
+    return {"appeals": appeals}
 
 
 @app.websocket("/ws/updates")
