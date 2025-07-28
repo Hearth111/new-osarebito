@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useParams } from 'next/navigation'
+import { HeartIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline'
 
 interface Post {
   id: number
@@ -33,9 +34,15 @@ export default function TagPostsPage() {
             <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
           )}
           <p>{p.content}</p>
-          <div className="text-xs text-gray-600 mt-1">
-            いいね {p.likes ? p.likes.length : 0} / リツイート{' '}
-            {p.retweets ? p.retweets.length : 0}
+          <div className="text-xs text-gray-600 mt-1 flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <HeartIcon className="w-4 h-4" />
+              {p.likes ? p.likes.length : 0}
+            </span>
+            <span className="flex items-center gap-1">
+              <ArrowsRightLeftIcon className="w-4 h-4" />
+              リポスト {p.retweets ? p.retweets.length : 0}
+            </span>
           </div>
         </div>
       ))}

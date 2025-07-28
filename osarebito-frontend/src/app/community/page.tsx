@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
 import { updatesWsUrl, bestAnswerUrl } from '@/routes'
+import {
+  HeartIcon,
+  ChatBubbleLeftIcon,
+  ArrowsRightLeftIcon,
+  BookmarkIcon,
+} from '@heroicons/react/24/outline'
 
 interface Post {
   id: number
@@ -270,25 +276,34 @@ export default function CommunityHome() {
                 ))}
               </div>
             )}
-            <div className="mt-2 flex gap-4 text-sm">
+            <div className="mt-2 flex gap-4 text-sm items-center">
               <button
-                className="underline"
-                onClick={() => handleLike(p.id, (p.likes || []).includes(localStorage.getItem('userId') || ''))}
+                className="flex items-center gap-1 underline"
+                onClick={() =>
+                  handleLike(
+                    p.id,
+                    (p.likes || []).includes(
+                      localStorage.getItem('userId') || '',
+                    ),
+                  )
+                }
               >
-                いいね {p.likes ? p.likes.length : 0}
+                <HeartIcon className="w-4 h-4" />
+                {p.likes ? p.likes.length : 0}
               </button>
               <button
-                className="underline"
+                className="flex items-center gap-1 underline"
                 onClick={() => {
                   const show = showComments[p.id]
                   if (!show) loadComments(p.id)
                   setShowComments((s) => ({ ...s, [p.id]: !show }))
                 }}
               >
-                コメント {comments[p.id]?.length || 0}
+                <ChatBubbleLeftIcon className="w-4 h-4" />
+                {comments[p.id]?.length || 0}
               </button>
               <button
-                className="underline"
+                className="flex items-center gap-1 underline"
                 onClick={() =>
                   handleRetweet(
                     p.id,
@@ -298,13 +313,14 @@ export default function CommunityHome() {
                   )
                 }
               >
-                リツイート {p.retweets ? p.retweets.length : 0}
+                <ArrowsRightLeftIcon className="w-4 h-4" />
+                {p.retweets ? p.retweets.length : 0}
               </button>
               <button
-                className="underline"
+                className="flex items-center gap-1 underline"
                 onClick={() => handleBookmark(p.id, bookmarks.includes(p.id))}
               >
-                {bookmarks.includes(p.id) ? 'ブックマーク済み' : 'ブックマーク'}
+                <BookmarkIcon className="w-4 h-4" />
               </button>
               <button className="underline" onClick={() => reportPost(p.id)}>
                 通報
