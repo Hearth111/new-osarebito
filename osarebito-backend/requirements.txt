@@ -4,3 +4,4 @@ python-dotenv
 email-validator
 SQLAlchemy
 psycopg2-binary
+Pillow

@@ -59,3 +59,5 @@ export const materialsUrl = `${BACKEND_URL}/materials`
 export const materialBoxUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/material_box`
 export const saveMaterialUrl = (id: number) => `${BACKEND_URL}/materials/${id}/save`
 export const unsaveMaterialUrl = (id: number) => `${BACKEND_URL}/materials/${id}/unsave`
+export const schedulesUrl = `${BACKEND_URL}/schedules`
+export const scheduleImageUrl = (id: number) => `${BACKEND_URL}/schedules/${id}/image`

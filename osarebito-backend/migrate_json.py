@@ -12,6 +12,7 @@ from app.db import (
     jobs_table,
     groups_table,
     group_messages_table,
+    schedules_table,
 )
 
 DATA_DIR = Path(__file__).resolve().parent / "app"
@@ -24,6 +25,7 @@ TABLES = {
     "jobs.json": (jobs_table, "id"),
     "groups.json": (groups_table, "id"),
     "group_messages.json": (group_messages_table, "id"),
+    "schedules.json": (schedules_table, "id"),
 }
 
 def load_json(path: Path):

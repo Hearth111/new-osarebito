@@ -46,3 +46,26 @@ def is_semibanned(user: dict) -> bool:
         except Exception:
             return False
     return False
+
+
+def generate_schedule_image(events: list[dict]) -> str:
+    """Create a simple schedule image and return it as base64 string."""
+    from PIL import Image, ImageDraw, ImageFont
+    import io, base64
+
+    events_sorted = sorted(events, key=lambda e: e.get("date", ""))
+    width = 600
+    height = 40 + 20 * len(events_sorted)
+    img = Image.new("RGB", (width, height), "white")
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.load_default()
+    y = 10
+    draw.text((10, y), "Schedule", fill="black", font=font)
+    y += 30
+    for ev in events_sorted:
+        text = f"{ev.get('date', '')} - {ev.get('title', '')}"
+        draw.text((10, y), text, fill="black", font=font)
+        y += 20
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode()
