@@ -8,7 +8,6 @@ import {
   BookmarkIcon,
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
-import ReportModal from '../../../components/ReportModal'
 
 interface Post {
   id: number
