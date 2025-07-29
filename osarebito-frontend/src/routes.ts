@@ -53,3 +53,4 @@ export const jobsUrl = `${BACKEND_URL}/jobs`
 export const createGroupUrl = `${BACKEND_URL}/groups`
 export const userGroupsUrl = (userId: string) => `${BACKEND_URL}/groups/${userId}`
 export const groupMessagesUrl = (groupId: number) => `${BACKEND_URL}/groups/${groupId}/messages`
+export const fanPostsUrl = `${BACKEND_URL}/fan_posts`
