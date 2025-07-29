@@ -94,6 +94,7 @@ class MessageCreate(BaseModel):
 
 class ReportCreate(BaseModel):
     reporter_id: str
+    category: str
     reason: Optional[str] = None
 
 class JobPost(BaseModel):

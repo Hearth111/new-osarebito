@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
 from ..models import (
     PostCreate,
@@ -26,6 +26,7 @@ from ..utils import (
     FIRST_POST_ACHIEVEMENT,
     FIRST_COMMENT_ACHIEVEMENT,
     ROLE_REPORT_POINTS,
+    REPORT_CATEGORIES,
     broadcast,
     is_semibanned,
 )
@@ -317,6 +318,8 @@ def report_post(post_id: int, rep: ReportCreate):
     reporter = next((u for u in users if u["user_id"] == rep.reporter_id), None)
     if not reporter:
         raise HTTPException(status_code=404, detail="User not found")
+    if rep.category not in REPORT_CATEGORIES:
+        raise HTTPException(status_code=400, detail="Invalid category")
     reports = load_reports()
     if any(
         r["target_type"] == "post" and r["target_id"] == post_id and r["reporter_id"] == rep.reporter_id
@@ -329,6 +332,7 @@ def report_post(post_id: int, rep: ReportCreate):
         "target_type": "post",
         "target_id": post_id,
         "reporter_id": rep.reporter_id,
+        "category": rep.category,
         "reason": rep.reason or "",
         "created_at": datetime.utcnow().isoformat(),
     }
@@ -355,6 +359,8 @@ def report_comment(comment_id: int, rep: ReportCreate):
     reporter = next((u for u in users if u["user_id"] == rep.reporter_id), None)
     if not reporter:
         raise HTTPException(status_code=404, detail="User not found")
+    if rep.category not in REPORT_CATEGORIES:
+        raise HTTPException(status_code=400, detail="Invalid category")
     reports = load_reports()
     if any(
         r["target_type"] == "comment" and r["target_id"] == comment_id and r["reporter_id"] == rep.reporter_id
@@ -367,6 +373,7 @@ def report_comment(comment_id: int, rep: ReportCreate):
         "target_type": "comment",
         "target_id": comment_id,
         "reporter_id": rep.reporter_id,
+        "category": rep.category,
         "reason": rep.reason or "",
         "created_at": datetime.utcnow().isoformat(),
     }

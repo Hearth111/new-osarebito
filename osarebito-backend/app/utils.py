@@ -18,6 +18,7 @@ async def broadcast(message: dict) -> None:
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 ROLE_REPORT_POINTS = {"推され人": 1, "推し人": 1, "お仕事人": 1}
+REPORT_CATEGORIES = ["スパム・広告", "迷惑行為", "不適切なコンテンツ", "その他"]
 TUTORIAL_TASKS = ["プロフィールを設定する", "最初の投稿をしてみよう", "他のユーザーをフォローしよう"]
 FIRST_POST_ACHIEVEMENT = "初投稿"
 FIRST_COMMENT_ACHIEVEMENT = "初コメント"
