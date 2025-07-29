@@ -127,6 +127,18 @@ def trending_posts():
     return {"posts": result}
 
 
+@router.get("/posts/{post_id}")
+def get_post(post_id: int):
+    posts = load_posts()
+    post = next((p for p in posts if p["id"] == post_id), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    item = post.copy()
+    if item.get("anonymous"):
+        item["author_id"] = "匿名"
+    return item
+
+
 @router.get("/posts/by_tag")
 def posts_by_tag(tag: str):
     posts = load_posts()
