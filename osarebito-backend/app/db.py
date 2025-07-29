@@ -96,6 +96,13 @@ schedules_table = Table(
     Column("data", JSON, nullable=False),
 )
 
+approval_calendars_table = Table(
+    "approval_calendars",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("data", JSON, nullable=False),
+)
+
 metadata.create_all(engine)
 
 

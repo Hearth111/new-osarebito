@@ -7,6 +7,7 @@ import {
   PhotoIcon,
   MagnifyingGlassIcon,
   Cog6ToothIcon,
+  CalendarDaysIcon,
 } from '@heroicons/react/24/outline'
 
 export default function Sidebar() {
@@ -31,6 +32,10 @@ export default function Sidebar() {
       <Link href="/profile/search" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
         <MagnifyingGlassIcon className="w-5 h-5" />
         <span>ユーザー検索</span>
+      </Link>
+      <Link href="/approval-calendar" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
+        <CalendarDaysIcon className="w-5 h-5" />
+        <span>承認式カレンダー</span>
       </Link>
       <Link href="/site-settings" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
         <Cog6ToothIcon className="w-5 h-5" />
