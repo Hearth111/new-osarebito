@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { HeartIcon, ArrowsRightLeftIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
+import ReportModal from '../../../components/ReportModal'
 
 interface Post {
   id: number
@@ -33,6 +34,11 @@ export default function PostCommentsPage() {
   const [comments, setComments] = useState<Comment[]>([])
   const [commentText, setCommentText] = useState('')
   const [bookmarks, setBookmarks] = useState<number[]>([])
+  const [reportTarget, setReportTarget] = useState<
+    | { type: 'post'; id: number }
+    | { type: 'comment'; id: number }
+    | null
+  >(null)
 
   useEffect(() => {
     axios.get(`/api/posts/${postId}`).then((res) => setPost(res.data))
@@ -105,13 +111,22 @@ export default function PostCommentsPage() {
           <button className="flex items-center gap-1 underline" onClick={() => handleBookmark(marked)}>
             <BookmarkIcon className={`w-4 h-4 ${marked ? 'text-green-500' : ''}`} />
           </button>
+          <button className="underline text-sm" onClick={() => setReportTarget({ type: 'post', id: postId })}>
+            通報
+          </button>
         </div>
       </div>
       <div className="space-y-2">
         {comments.map((c) => (
-          <div key={c.id} className="border-t pt-1 text-sm">
+          <div key={c.id} className="rounded-lg bg-white p-2 shadow text-sm">
             <span className="text-gray-600 mr-2">{c.author_id}</span>
             {c.content}
+            <button
+              className="ml-2 text-xs underline"
+              onClick={() => setReportTarget({ type: 'comment', id: c.id })}
+            >
+              通報
+            </button>
           </div>
         ))}
         <div className="flex gap-2 mt-2">
@@ -126,6 +141,13 @@ export default function PostCommentsPage() {
           </button>
         </div>
       </div>
+      {reportTarget && (
+        <ReportModal
+          targetType={reportTarget.type}
+          targetId={reportTarget.id}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
     </div>
   )
 }

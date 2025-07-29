@@ -10,6 +10,7 @@ import {
   BookmarkIcon,
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
+import ReportModal from '../../components/ReportModal'
 
 interface Post {
   id: number
@@ -50,8 +51,12 @@ export default function CommunityHome() {
   const [anonymous, setAnonymous] = useState(false)
   const [comments, setComments] = useState<Record<number, Comment[]>>({})
   const [commentText, setCommentText] = useState<Record<number, string>>({})
-  const [showComments, setShowComments] = useState<Record<number, boolean>>({})
   const [bookmarks, setBookmarks] = useState<number[]>([])
+  const [reportTarget, setReportTarget] = useState<
+    | { type: 'post'; id: number }
+    | { type: 'comment'; id: number }
+    | null
+  >(null)
 
   useEffect(() => {
     const ws = new WebSocket(updatesWsUrl)
@@ -201,40 +206,8 @@ export default function CommunityHome() {
     )
   }
 
-  const reportPost = async (postId: number) => {
-    const reporter_id = localStorage.getItem('userId') || ''
-    if (!reporter_id) return
-    const cat = window.prompt(
-      '通報カテゴリを番号で選択してください:\n1. スパム・広告\n2. 迷惑行為\n3. 不適切なコンテンツ\n4. その他',
-    )
-    if (!cat) return
-    const categories = ['スパム・広告', '迷惑行為', '不適切なコンテンツ', 'その他']
-    const category = categories[Number(cat) - 1] || 'その他'
-    const reason = window.prompt('詳細な通報内容を入力してください(任意)') || ''
-    await axios.post(`/api/reports/post/${postId}`, {
-      reporter_id,
-      category,
-      reason,
-    })
-    alert('通報しました')
-  }
-
-  const reportComment = async (commentId: number) => {
-    const reporter_id = localStorage.getItem('userId') || ''
-    if (!reporter_id) return
-    const cat = window.prompt(
-      '通報カテゴリを番号で選択してください:\n1. スパム・広告\n2. 迷惑行為\n3. 不適切なコンテンツ\n4. その他',
-    )
-    if (!cat) return
-    const categories = ['スパム・広告', '迷惑行為', '不適切なコンテンツ', 'その他']
-    const category = categories[Number(cat) - 1] || 'その他'
-    const reason = window.prompt('詳細な通報内容を入力してください(任意)') || ''
-    await axios.post(`/api/reports/comment/${commentId}`, {
-      reporter_id,
-      category,
-      reason,
-    })
-    alert('通報しました')
+  const openReport = (type: 'post' | 'comment', id: number) => {
+    setReportTarget({ type, id })
   }
 
   const doSearch = async () => {
@@ -383,34 +356,39 @@ export default function CommunityHome() {
                   className={`w-4 h-4 ${bookmarks.includes(p.id) ? 'text-green-500' : ''}`}
                 />
               </button>
-              <button className="underline" onClick={() => reportPost(p.id)}>
+              <button className="underline" onClick={() => openReport('post', p.id)}>
                 通報
               </button>
             </div>
-            {showComments[p.id] && (
-              <div className="mt-2 space-y-2">
-                {(comments[p.id] || []).map((c) => (
+            <div className="mt-2 space-y-2">
+              {(comments[p.id] || []).map((c) => (
                   <div
                     key={c.id}
-                    className={`border-t pt-1 text-sm ${p.best_answer_id === c.id ? 'bg-yellow-50' : ''}`}
+                    className={`rounded-lg bg-white p-2 shadow text-sm ${p.best_answer_id === c.id ? 'bg-yellow-50' : ''}`}
                   >
-                  <span className="text-gray-600 mr-2">{c.author_id}</span>
-                  {c.content}
-                  {p.best_answer_id === c.id && (
-                    <span className="ml-2 text-xs text-red-500">ベストアンサー</span>
-                  )}
-                  {p.author_id === (typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '') && (
+                    <span className="text-gray-600 mr-2">{c.author_id}</span>
+                    {c.content}
+                    {p.best_answer_id === c.id && (
+                      <span className="ml-2 text-xs text-red-500">ベストアンサー</span>
+                    )}
+                    {p.author_id ===
+                      (typeof window !== 'undefined'
+                        ? localStorage.getItem('userId') || ''
+                        : '') && (
+                      <button
+                        className="ml-2 text-xs underline"
+                        onClick={() => toggleBest(p.id, c.id)}
+                      >
+                        {p.best_answer_id === c.id ? '取り消し' : 'ベスト'}
+                      </button>
+                    )}
                     <button
                       className="ml-2 text-xs underline"
-                      onClick={() => toggleBest(p.id, c.id)}
+                      onClick={() => openReport('comment', c.id)}
                     >
-                      {p.best_answer_id === c.id ? '取り消し' : 'ベスト'}
+                      通報
                     </button>
-                  )}
-                  <button className="ml-2 text-xs underline" onClick={() => reportComment(c.id)}>
-                    通報
-                  </button>
-                </div>
+                  </div>
                 ))}
                 <div className="flex gap-2">
                   <input
@@ -429,7 +407,6 @@ export default function CommunityHome() {
                   </button>
                 </div>
               </div>
-            )}
           </div>
         ))}
       </div>
@@ -479,6 +456,13 @@ export default function CommunityHome() {
           </div>
         </div>
       </div>
+      {reportTarget && (
+        <ReportModal
+          targetType={reportTarget.type}
+          targetId={reportTarget.id}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
     </div>
   )
 }
