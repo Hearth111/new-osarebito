@@ -54,3 +54,7 @@ export const createGroupUrl = `${BACKEND_URL}/groups`
 export const userGroupsUrl = (userId: string) => `${BACKEND_URL}/groups/${userId}`
 export const groupMessagesUrl = (groupId: number) => `${BACKEND_URL}/groups/${groupId}/messages`
 export const fanPostsUrl = `${BACKEND_URL}/fan_posts`
+export const materialsUrl = `${BACKEND_URL}/materials`
+export const materialBoxUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/material_box`
+export const saveMaterialUrl = (id: number) => `${BACKEND_URL}/materials/${id}/save`
+export const unsaveMaterialUrl = (id: number) => `${BACKEND_URL}/materials/${id}/unsave`
