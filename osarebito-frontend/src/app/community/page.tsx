@@ -330,17 +330,13 @@ export default function CommunityHome() {
                 )}
                 {p.likes ? p.likes.length : 0}
               </button>
-              <button
+              <Link
+                href={`/community/post/${p.id}`}
                 className="flex items-center gap-1 underline"
-                onClick={() => {
-                  const show = showComments[p.id]
-                  if (!show) loadComments(p.id)
-                  setShowComments((s) => ({ ...s, [p.id]: !show }))
-                }}
               >
                 <ChatBubbleLeftIcon className="w-4 h-4" />
                 {comments[p.id]?.length || 0}
-              </button>
+              </Link>
               <button
                 className="flex items-center gap-1 underline"
                 onClick={() =>
@@ -352,14 +348,20 @@ export default function CommunityHome() {
                   )
                 }
               >
-                <ArrowsRightLeftIcon className="w-4 h-4" />
+                <ArrowsRightLeftIcon
+                  className={`w-4 h-4 ${(
+                    p.retweets || []
+                  ).includes(localStorage.getItem('userId') || '') ? 'text-blue-500' : ''}`}
+                />
                 {p.retweets ? p.retweets.length : 0}
               </button>
               <button
                 className="flex items-center gap-1 underline"
                 onClick={() => handleBookmark(p.id, bookmarks.includes(p.id))}
               >
-                <BookmarkIcon className="w-4 h-4" />
+                <BookmarkIcon
+                  className={`w-4 h-4 ${bookmarks.includes(p.id) ? 'text-green-500' : ''}`}
+                />
               </button>
               <button className="underline" onClick={() => reportPost(p.id)}>
                 通報
