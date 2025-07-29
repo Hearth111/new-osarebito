@@ -1,6 +1,12 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
+import {
+  CloudArrowUpIcon,
+  ArrowDownTrayIcon,
+  AdjustmentsHorizontalIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/outline'
 
 function clamp(v: number) {
   return Math.max(0, Math.min(255, v))
@@ -95,47 +101,68 @@ export default function ImageTool() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-10 flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">画像圧縮&amp;AI対策</h1>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-      />
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={aiOption}
-          onChange={(e) => setAiOption(e.target.checked)}
-        />
-        AI対策
-      </label>
-      <button
-        className="bg-pink-500 text-white py-2 px-4 rounded-md shadow-md hover:bg-pink-600 transition-colors duration-200"
-        onClick={handleProcess}
-        disabled={!file}
-      >
-        変換
-      </button>
-      {resultUrl && (
-        <div className="flex flex-col gap-2 p-4 border border-gray-200 rounded-md">
-          <h2 className="text-xl font-semibold">結果</h2>
-          <Image
-            src={resultUrl}
-            alt="result"
-            width={500}
-            height={500}
-            className="max-w-full h-auto rounded-md shadow-sm"
+    <div className="max-w-lg mx-auto mt-10 space-y-6">
+      <h1 className="text-3xl font-bold flex items-center gap-2 text-pink-600">
+        <SparklesIcon className="w-7 h-7" />
+        画像圧縮&AI対策
+      </h1>
+      <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+        <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-pink-300 rounded-lg p-6 cursor-pointer hover:bg-pink-50">
+          <CloudArrowUpIcon className="w-6 h-6 text-pink-500" />
+          <span className="text-sm text-gray-500">
+            {file ? file.name : '画像を選択'}
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="hidden"
           />
-          <a
-            href={resultUrl}
-            download="processed.jpg"
-            className="text-pink-500 underline text-center hover:text-pink-700 transition-colors duration-200"
-          >
-            Download
-          </a>
-        </div>
-      )}
+        </label>
+        <label className="flex items-center justify-between">
+          <span className="flex items-center gap-1 text-sm text-gray-700">
+            <AdjustmentsHorizontalIcon className="w-5 h-5" /> AI対策
+          </span>
+          <div className="relative">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={aiOption}
+              onChange={(e) => setAiOption(e.target.checked)}
+            />
+            <div className="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-pink-500 transition" />
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+          </div>
+        </label>
+        <button
+          className="w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white py-2 rounded-md shadow hover:opacity-90 transition disabled:opacity-50"
+          onClick={handleProcess}
+          disabled={!file}
+        >
+          変換
+        </button>
+        {resultUrl && (
+          <div className="flex flex-col gap-2 p-4 border border-gray-200 rounded-md">
+            <h2 className="text-xl font-semibold flex items-center gap-1">
+              <ArrowDownTrayIcon className="w-5 h-5" />結果
+            </h2>
+            <Image
+              src={resultUrl}
+              alt="result"
+              width={500}
+              height={500}
+              className="max-w-full h-auto rounded-md shadow-sm"
+            />
+            <a
+              href={resultUrl}
+              download="processed.jpg"
+              className="text-pink-500 underline text-center hover:text-pink-700 transition-colors duration-200"
+            >
+              Download
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
