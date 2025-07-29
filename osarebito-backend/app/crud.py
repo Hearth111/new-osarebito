@@ -13,6 +13,7 @@ from .db import (
     appeals_table,
     materials_table,
     polls_table,
+    schedules_table,
 )
 
 
@@ -110,3 +111,11 @@ def load_polls():
 
 def save_polls(polls):
     save_table(polls_table, polls, "id")
+
+
+def load_schedules():
+    return load_table(schedules_table)
+
+
+def save_schedules(schedules):
+    save_table(schedules_table, schedules, "id")

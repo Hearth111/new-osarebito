@@ -89,6 +89,13 @@ polls_table = Table(
     Column("data", JSON, nullable=False),
 )
 
+schedules_table = Table(
+    "schedules",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("data", JSON, nullable=False),
+)
+
 metadata.create_all(engine)
 
 

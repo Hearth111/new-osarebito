@@ -218,3 +218,23 @@ class MaterialCreate(BaseModel):
 
 class MaterialBoxRequest(BaseModel):
     user_id: str
+
+
+class ScheduleEvent(BaseModel):
+    date: str
+    title: str
+    description: Optional[str] = None
+
+
+class ScheduleCreate(BaseModel):
+    author_id: str
+    events: List[ScheduleEvent]
+    template: Optional[str] = "default"
+
+
+class Schedule(BaseModel):
+    id: int
+    author_id: str
+    events: List[ScheduleEvent]
+    template: Optional[str] = "default"
+    created_at: str

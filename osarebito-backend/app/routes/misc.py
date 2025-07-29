@@ -12,6 +12,7 @@ from ..models import (
     MaterialBoxRequest,
     PollCreate,
     PollVoteRequest,
+    ScheduleCreate,
 )
 from ..crud import (
     load_users,
@@ -32,11 +33,14 @@ from ..crud import (
     save_materials,
     load_polls,
     save_polls,
+    load_schedules,
+    save_schedules,
 )
 from ..utils import (
     broadcast,
     TUTORIAL_TASKS,
     is_semibanned,
+    generate_schedule_image,
 )
 
 router = APIRouter()
@@ -436,4 +440,36 @@ async def vote_poll(poll_id: int, req: PollVoteRequest):
     counts = [len(v) for v in poll["votes"]]
     await broadcast({"type": "vote", "poll_id": poll_id, "counts": counts})
     return {"counts": counts}
+
+
+@router.post("/schedules")
+def create_schedule(req: ScheduleCreate):
+    users = load_users()
+    if not any(u["user_id"] == req.author_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    schedules = load_schedules()
+    new_id = max([s["id"] for s in schedules], default=0) + 1
+    events = [e.dict() for e in req.events]
+    item = {
+        "id": new_id,
+        "author_id": req.author_id,
+        "events": events,
+        "template": req.template or "default",
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    schedules.append(item)
+    save_schedules(schedules)
+    image = generate_schedule_image(events)
+    item_with_image = item | {"image": image}
+    return item_with_image
+
+
+@router.get("/schedules/{schedule_id}/image")
+def get_schedule_image(schedule_id: int):
+    schedules = load_schedules()
+    sched = next((s for s in schedules if s["id"] == schedule_id), None)
+    if not sched:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    image = generate_schedule_image(sched.get("events", []))
+    return {"image": image}
 
