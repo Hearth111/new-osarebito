@@ -60,6 +60,7 @@ class Post(BaseModel):
     best_answer_id: Optional[int] = None
     likes: List[str] = []
     retweets: List[str] = []
+    image: Optional[str] = None
     created_at: str
 
 class PostCreate(BaseModel):
@@ -68,6 +69,7 @@ class PostCreate(BaseModel):
     tags: Optional[List[str]] = None
     category: Optional[str] = None
     anonymous: bool = False
+    image: Optional[str] = None
 
 class Comment(BaseModel):
     id: int

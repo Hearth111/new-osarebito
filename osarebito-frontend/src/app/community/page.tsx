@@ -28,6 +28,7 @@ interface Post {
   best_answer_id?: number | null
   likes?: string[]
   retweets?: string[]
+  image?: string | null
 }
 
 interface User {
@@ -59,6 +60,7 @@ export default function CommunityHome() {
   const [showPollModal, setShowPollModal] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [newImage, setNewImage] = useState<string | null>(null)
   const [comments, setComments] = useState<Record<number, Comment[]>>({})
   const [commentText, setCommentText] = useState<Record<number, string>>({})
   const [bookmarks, setBookmarks] = useState<number[]>([])
@@ -100,7 +102,11 @@ export default function CommunityHome() {
     if (category) params.append('category', category)
     const userId = localStorage.getItem('userId') || ''
     if (userId) params.append('user_id', userId)
-    if (localStorage.getItem('anonymousMode') === '1') params.append('anonymous', 'true')
+    if (localStorage.getItem('anonymousMode') === '1') {
+      params.append('anonymous', 'true')
+    } else {
+      params.append('anonymous', 'false')
+    }
     const res = await axios.get(`/api/posts?${params.toString()}`)
     setPosts(res.data.posts || [])
   }
@@ -128,10 +134,17 @@ export default function CommunityHome() {
   const submitPost = async () => {
     const author_id = localStorage.getItem('userId') || ''
     if (!author_id || !newPost) return
-    await axios.post('/api/posts', { author_id, content: newPost, category: newCategory || null, anonymous })
+    await axios.post('/api/posts', {
+      author_id,
+      content: newPost,
+      category: newCategory || null,
+      anonymous,
+      image: newImage,
+    })
     setNewPost('')
     setNewCategory('')
     setAnonymous(false)
+    setNewImage(null)
     fetchPosts(feed)
   }
 
@@ -314,9 +327,23 @@ export default function CommunityHome() {
             </button>
             <button className="ml-auto bg-pink-500 hover:bg-pink-600 text-white rounded px-4 transition" onClick={submitPost}>
               投稿
-            </button>
-            <input type="file" ref={fileInputRef} className="hidden" />
+        </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const reader = new FileReader()
+                reader.onload = () => setNewImage(reader.result as string)
+                reader.readAsDataURL(file)
+              }}
+            />
           </div>
+          {newImage && (
+            <img src={newImage} alt="preview" className="max-h-40 mt-2" />
+          )}
           {newCategory && (
             <div className="text-sm mt-1">カテゴリ: {newCategory}</div>
           )}
@@ -328,6 +355,9 @@ export default function CommunityHome() {
               <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
             )}
             <p>{p.content}</p>
+            {p.image && (
+              <img src={p.image} alt="post image" className="max-h-60 mt-2" />
+            )}
             {p.tags && p.tags.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-2 text-sm text-pink-600">
                 {p.tags.map((t) => (
@@ -393,53 +423,7 @@ export default function CommunityHome() {
                 通報
               </button>
             </div>
-            <div className="mt-2 space-y-2">
-              {(comments[p.id] || []).map((c) => (
-                  <div
-                    key={c.id}
-                    className={`rounded-lg bg-white p-2 shadow text-sm ${p.best_answer_id === c.id ? 'bg-yellow-50' : ''}`}
-                  >
-                    <span className="text-gray-600 mr-2">{c.author_id}</span>
-                    {c.content}
-                    {p.best_answer_id === c.id && (
-                      <span className="ml-2 text-xs text-red-500">ベストアンサー</span>
-                    )}
-                    {p.author_id ===
-                      (typeof window !== 'undefined'
-                        ? localStorage.getItem('userId') || ''
-                        : '') && (
-                      <button
-                        className="ml-2 text-xs underline"
-                        onClick={() => toggleBest(p.id, c.id)}
-                      >
-                        {p.best_answer_id === c.id ? '取り消し' : 'ベスト'}
-                      </button>
-                    )}
-                    <button
-                      className="ml-2 text-xs underline"
-                      onClick={() => openReport('comment', c.id)}
-                    >
-                      通報
-                    </button>
-                  </div>
-                ))}
-                <div className="flex gap-2">
-                  <input
-                    className="rounded flex-1 p-1 text-sm bg-white shadow"
-                    value={commentText[p.id] || ''}
-                    onChange={(e) =>
-                      setCommentText((t) => ({ ...t, [p.id]: e.target.value }))
-                    }
-                    placeholder="コメントする"
-                  />
-                  <button
-                    className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition"
-                onClick={() => submitComment(p.id)}
-                  >
-                    送信
-                  </button>
-                </div>
-              </div>
+            {/* comments hidden in feed */}
               <div className="text-right text-xs text-gray-500 mt-1">
                 {new Date(p.created_at).toLocaleString()}
               </div>

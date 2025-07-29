@@ -11,6 +11,7 @@ interface Post {
   category?: string | null
   likes?: string[]
   retweets?: string[]
+  image?: string | null
 }
 
 export default function TagPostsPage() {
@@ -34,6 +35,9 @@ export default function TagPostsPage() {
             <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
           )}
           <p>{p.content}</p>
+          {p.image && (
+            <img src={p.image} alt="post image" className="max-h-60 mt-2" />
+          )}
           <div className="text-xs text-gray-600 mt-1 flex items-center gap-4">
             <span className="flex items-center gap-1">
               <HeartIcon className="w-4 h-4" />

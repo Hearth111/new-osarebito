@@ -9,6 +9,7 @@ interface Post {
   content: string
   created_at: string
   category?: string | null
+  image?: string | null
 }
 
 export default function CommunityMyPage() {
@@ -31,6 +32,7 @@ export default function CommunityMyPage() {
       <div className="text-sm text-gray-600">{p.author_id}</div>
       {p.category && <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>}
       <p>{p.content}</p>
+      {p.image && <img src={p.image} alt="post image" className="max-h-60 mt-2" />}
       <Link href={`/community/post/${p.id}`} className="text-xs text-pink-500 underline">
         詳細
       </Link>

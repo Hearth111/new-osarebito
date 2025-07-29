@@ -15,6 +15,7 @@ interface Post {
   content: string
   likes?: string[]
   retweets?: string[]
+  image?: string | null
 }
 
 export default function CommunityTrends() {
@@ -47,8 +48,11 @@ export default function CommunityTrends() {
         <h2 className="font-semibold mb-2">人気投稿</h2>
         {posts.map((p) => (
           <div key={p.id} className="border rounded-lg bg-white p-3 mb-3 shadow">
-            <div className="text-sm text-gray-600">{p.author_id}</div>
+           <div className="text-sm text-gray-600">{p.author_id}</div>
             <p>{p.content}</p>
+            {p.image && (
+              <img src={p.image} alt="post image" className="max-h-60 mt-2" />
+            )}
             <div className="text-xs text-gray-600 mt-1 flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <HeartIcon className="w-4 h-4" />
