@@ -61,3 +61,7 @@ export const saveMaterialUrl = (id: number) => `${BACKEND_URL}/materials/${id}/s
 export const unsaveMaterialUrl = (id: number) => `${BACKEND_URL}/materials/${id}/unsave`
 export const schedulesUrl = `${BACKEND_URL}/schedules`
 export const scheduleImageUrl = (id: number) => `${BACKEND_URL}/schedules/${id}/image`
+export const approvalCalendarsUrl = `${BACKEND_URL}/approval_calendars`
+export const userCalendarsUrl = (userId: string) => `${BACKEND_URL}/approval_calendars/${userId}`
+export const calendarRequestUrl = (id: number) => `${BACKEND_URL}/approval_calendars/${id}/request`
+export const calendarApproveUrl = (id: number) => `${BACKEND_URL}/approval_calendars/${id}/approve`

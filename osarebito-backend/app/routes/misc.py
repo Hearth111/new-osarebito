@@ -13,6 +13,9 @@ from ..models import (
     PollCreate,
     PollVoteRequest,
     ScheduleCreate,
+    ApprovalCalendarCreate,
+    CalendarRequest,
+    CalendarApproveRequest,
 )
 from ..crud import (
     load_users,
@@ -35,6 +38,8 @@ from ..crud import (
     save_polls,
     load_schedules,
     save_schedules,
+    load_approval_calendars,
+    save_approval_calendars,
 )
 from ..utils import (
     broadcast,
@@ -472,4 +477,73 @@ def get_schedule_image(schedule_id: int):
         raise HTTPException(status_code=404, detail="Schedule not found")
     image = generate_schedule_image(sched.get("events", []))
     return {"image": image}
+
+
+@router.post("/approval_calendars")
+def create_calendar(cal: ApprovalCalendarCreate):
+    users = load_users()
+    if not any(u["user_id"] == cal.author_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    calendars = load_approval_calendars()
+    new_id = max([c["id"] for c in calendars], default=0) + 1
+    slots = []
+    for i, s in enumerate(cal.slots, start=1):
+        data = s.dict()
+        data["id"] = i
+        data.setdefault("requests", [])
+        data.setdefault("approved", [])
+        slots.append(data)
+    item = {
+        "id": new_id,
+        "author_id": cal.author_id,
+        "slots": slots,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    calendars.append(item)
+    save_approval_calendars(calendars)
+    return item
+
+
+@router.get("/approval_calendars/{user_id}")
+def get_calendars(user_id: str):
+    calendars = load_approval_calendars()
+    result = [c for c in calendars if c["author_id"] == user_id]
+    return {"calendars": result}
+
+
+@router.post("/approval_calendars/{calendar_id}/request")
+def request_slot(calendar_id: int, req: CalendarRequest):
+    calendars = load_approval_calendars()
+    cal = next((c for c in calendars if c["id"] == calendar_id), None)
+    if not cal:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+    slot = next((s for s in cal["slots"] if s["id"] == req.slot_id), None)
+    if not slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+    if req.user_id in slot.get("approved", []) or req.user_id in slot.get("requests", []):
+        return {"status": "already"}
+    slot.setdefault("requests", []).append(req.user_id)
+    save_approval_calendars(calendars)
+    return {"status": "requested"}
+
+
+@router.post("/approval_calendars/{calendar_id}/approve")
+def approve_slot(calendar_id: int, req: CalendarApproveRequest):
+    calendars = load_approval_calendars()
+    cal = next((c for c in calendars if c["id"] == calendar_id), None)
+    if not cal:
+        raise HTTPException(status_code=404, detail="Calendar not found")
+    if cal["author_id"] != req.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    slot = next((s for s in cal["slots"] if s["id"] == req.slot_id), None)
+    if not slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+    if req.requester_id not in slot.get("requests", []):
+        raise HTTPException(status_code=400, detail="No such request")
+    if len(slot.get("approved", [])) >= slot.get("capacity", 1):
+        raise HTTPException(status_code=400, detail="Capacity full")
+    slot["requests"].remove(req.requester_id)
+    slot.setdefault("approved", []).append(req.requester_id)
+    save_approval_calendars(calendars)
+    return {"status": "approved"}
 

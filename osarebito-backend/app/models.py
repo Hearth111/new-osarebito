@@ -239,3 +239,34 @@ class Schedule(BaseModel):
     events: List[ScheduleEvent]
     template: Optional[str] = "default"
     created_at: str
+
+
+class CalendarSlot(BaseModel):
+    id: Optional[int] = None
+    time: str
+    capacity: int = 1
+    requests: List[str] = []
+    approved: List[str] = []
+
+
+class ApprovalCalendarCreate(BaseModel):
+    author_id: str
+    slots: List[CalendarSlot]
+
+
+class ApprovalCalendar(BaseModel):
+    id: int
+    author_id: str
+    slots: List[CalendarSlot]
+    created_at: str
+
+
+class CalendarRequest(BaseModel):
+    user_id: str
+    slot_id: int
+
+
+class CalendarApproveRequest(BaseModel):
+    user_id: str
+    slot_id: int
+    requester_id: str
