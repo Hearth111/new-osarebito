@@ -243,6 +243,23 @@ def list_bookmarks(user_id: str):
     return {"posts": result}
 
 
+@router.get("/users/{user_id}/retweets")
+def list_retweets(user_id: str):
+    users = load_users()
+    if not any(u["user_id"] == user_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    posts = load_posts()
+    result = []
+    for p in posts:
+        if user_id in p.get("retweets", []):
+            item = p.copy()
+            if item.get("anonymous"):
+                item["author_id"] = "匿名"
+            result.append(item)
+    result.sort(key=lambda x: x["id"], reverse=True)
+    return {"posts": result}
+
+
 @router.get("/users/search")
 def search_users(query: str):
     users = load_users()
