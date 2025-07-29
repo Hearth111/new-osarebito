@@ -9,6 +9,7 @@ import {
   SparklesIcon,
   UserGroupIcon,
   BookmarkIcon,
+  PaintBrushIcon,
 } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 
@@ -55,6 +56,10 @@ export default function CommunitySidebar() {
       <Link href="/community/jobs" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
         <BriefcaseIcon className="w-5 h-5" />
         <span>依頼掲示板</span>
+      </Link>
+      <Link href="/community/fan_posts" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
+        <PaintBrushIcon className="w-5 h-5" />
+        <span>ファン掲示板</span>
       </Link>
       <Link href="/community/achievements" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
         <SparklesIcon className="w-5 h-5" />
