@@ -148,6 +148,9 @@ export default function PostCommentsPage() {
             通報
           </button>
         </div>
+        <div className="text-right text-xs text-gray-500 mt-1">
+          {new Date(post.created_at).toLocaleString()}
+        </div>
       </div>
       <div className="space-y-2">
         {comments.map((c) => (

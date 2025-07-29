@@ -67,7 +67,12 @@ async def create_post(post: PostCreate):
 
 
 @router.get("/posts")
-def list_posts(feed: str | None = None, user_id: str | None = None, category: str | None = None):
+def list_posts(
+    feed: str | None = None,
+    user_id: str | None = None,
+    category: str | None = None,
+    anonymous: bool | None = None,
+):
     posts = load_posts()
     users = load_users()
     blocked_me = set()
@@ -79,6 +84,8 @@ def list_posts(feed: str | None = None, user_id: str | None = None, category: st
             blocked_by_me = set(me.get("blocks", []))
     if category:
         posts = [p for p in posts if p.get("category") == category]
+    if anonymous is not None:
+        posts = [p for p in posts if bool(p.get("anonymous")) == anonymous]
     if feed == "following" and user_id:
         me = next((u for u in users if u["user_id"] == user_id), None)
         if not me:
@@ -95,6 +102,7 @@ def list_posts(feed: str | None = None, user_id: str | None = None, category: st
         if item.get("anonymous"):
             item["author_id"] = "匿名"
         result.append(item)
+    result.sort(key=lambda x: x.get("created_at", ""), reverse=True)
     return {"posts": result}
 
 
