@@ -10,6 +10,8 @@ from ..models import (
     AppealResolveRequest,
     MaterialCreate,
     MaterialBoxRequest,
+    PollCreate,
+    PollVoteRequest,
 )
 from ..crud import (
     load_users,
@@ -28,6 +30,8 @@ from ..crud import (
     save_appeals,
     load_materials,
     save_materials,
+    load_polls,
+    save_polls,
 )
 from ..utils import (
     broadcast,
@@ -371,3 +375,65 @@ def list_material_box(user_id: str):
     result = [m for m in materials if m["id"] in ids]
     result.sort(key=lambda x: x["id"], reverse=True)
     return {"materials": result}
+
+
+@router.get("/polls")
+def list_polls():
+    polls = load_polls()
+    polls.sort(key=lambda x: x["id"], reverse=True)
+    return {"polls": polls}
+
+
+@router.post("/polls")
+async def create_poll(poll: PollCreate):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == poll.author_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.get("role") != "推され人":
+        raise HTTPException(status_code=403, detail="Only performers can create")
+    polls = load_polls()
+    new_id = max([p["id"] for p in polls], default=0) + 1
+    item = {
+        "id": new_id,
+        "author_id": poll.author_id,
+        "question": poll.question,
+        "options": poll.options,
+        "votes": [[] for _ in poll.options],
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    polls.append(item)
+    save_polls(polls)
+    await broadcast({"type": "new_poll", "poll": item})
+    return item
+
+
+@router.get("/polls/{poll_id}")
+def get_poll(poll_id: int):
+    polls = load_polls()
+    poll = next((p for p in polls if p["id"] == poll_id), None)
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    return poll
+
+
+@router.post("/polls/{poll_id}/vote")
+async def vote_poll(poll_id: int, req: PollVoteRequest):
+    polls = load_polls()
+    poll = next((p for p in polls if p["id"] == poll_id), None)
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    users = load_users()
+    if not any(u["user_id"] == req.user_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    if req.option < 0 or req.option >= len(poll.get("options", [])):
+        raise HTTPException(status_code=400, detail="Invalid option")
+    for voters in poll["votes"]:
+        if req.user_id in voters:
+            voters.remove(req.user_id)
+    poll["votes"][req.option].append(req.user_id)
+    save_polls(polls)
+    counts = [len(v) for v in poll["votes"]]
+    await broadcast({"type": "vote", "poll_id": poll_id, "counts": counts})
+    return {"counts": counts}
+

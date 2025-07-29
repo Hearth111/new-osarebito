@@ -164,6 +164,23 @@ class BestAnswerRequest(BaseModel):
     comment_id: int
     user_id: str
 
+class Poll(BaseModel):
+    id: int
+    author_id: str
+    question: str
+    options: List[str]
+    votes: List[List[str]]
+    created_at: str
+
+class PollCreate(BaseModel):
+    author_id: str
+    question: str
+    options: List[str]
+
+class PollVoteRequest(BaseModel):
+    user_id: str
+    option: int
+
 class AppealResolveRequest(BaseModel):
     action: str
     resolver_id: str

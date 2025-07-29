@@ -82,6 +82,13 @@ materials_table = Table(
     Column("data", JSON, nullable=False),
 )
 
+polls_table = Table(
+    "polls",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("data", JSON, nullable=False),
+)
+
 metadata.create_all(engine)
 
 
