@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
 import { updatesWsUrl, bestAnswerUrl } from '@/routes'
@@ -8,6 +8,11 @@ import {
   ChatBubbleLeftIcon,
   ArrowsRightLeftIcon,
   BookmarkIcon,
+  PhotoIcon,
+  ChartBarIcon,
+  CalendarDaysIcon,
+  TagIcon,
+  UserIcon,
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 import ReportModal from '../../components/ReportModal'
@@ -44,11 +49,16 @@ export default function CommunityHome() {
   const [category, setCategory] = useState('')
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<User[]>([])
+  const [postResults, setPostResults] = useState<Post[]>([])
   const [recoUsers, setRecoUsers] = useState<User[]>([])
   const [tags, setTags] = useState<{ name: string; count: number }[]>([])
   const [newPost, setNewPost] = useState('')
   const [newCategory, setNewCategory] = useState('')
   const [anonymous, setAnonymous] = useState(false)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showPollModal, setShowPollModal] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [comments, setComments] = useState<Record<number, Comment[]>>({})
   const [commentText, setCommentText] = useState<Record<number, string>>({})
   const [bookmarks, setBookmarks] = useState<number[]>([])
@@ -90,6 +100,7 @@ export default function CommunityHome() {
     if (category) params.append('category', category)
     const userId = localStorage.getItem('userId') || ''
     if (userId) params.append('user_id', userId)
+    if (localStorage.getItem('anonymousMode') === '1') params.append('anonymous', 'true')
     const res = await axios.get(`/api/posts?${params.toString()}`)
     setPosts(res.data.posts || [])
   }
@@ -212,8 +223,16 @@ export default function CommunityHome() {
 
   const doSearch = async () => {
     if (!search) return
-    const res = await axios.get(`/api/users/search?query=${encodeURIComponent(search)}`)
-    setResults(res.data)
+    if (search.startsWith('#')) {
+      const tag = search.slice(1)
+      const res = await axios.get(`/api/posts/by_tag?tag=${encodeURIComponent(tag)}`)
+      setPostResults(res.data.posts || [])
+      setResults([])
+    } else {
+      const res = await axios.get(`/api/users/search?query=${encodeURIComponent(search)}`)
+      setResults(res.data)
+      setPostResults([])
+    }
   }
 
   return (
@@ -266,27 +285,41 @@ export default function CommunityHome() {
             お悩み相談
           </button>
         </div>
-        <div className="mb-6 flex gap-2">
+        <div className="mb-6">
           <textarea
-            className="rounded p-2 flex-1 bg-white shadow"
-            rows={3}
+            className="rounded p-2 w-full bg-white shadow mb-2"
+            rows={4}
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="いまどうしてる？"
           />
-          <select className="border rounded px-2" value={newCategory} onChange={(e) => setNewCategory(e.target.value)}>
-            <option value="">カテゴリなし</option>
-            <option value="お悩み相談">お悩み相談</option>
-            <option value="コラボ募集">コラボ募集</option>
-            <option value="雑談">雑談</option>
-          </select>
-          <label className="flex items-center gap-1 text-sm">
-            <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
-            匿名
-          </label>
-          <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-4 transition" onClick={submitPost}>
-            投稿
-          </button>
+          <div className="flex gap-2 items-center">
+            <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-pink-100 rounded">
+              <PhotoIcon className="w-5 h-5" />
+            </button>
+            <button onClick={() => setShowPollModal(true)} className="p-1 hover:bg-pink-100 rounded">
+              <ChartBarIcon className="w-5 h-5" />
+            </button>
+            <button onClick={() => setShowScheduleModal(true)} className="p-1 hover:bg-pink-100 rounded">
+              <CalendarDaysIcon className="w-5 h-5" />
+            </button>
+            <button onClick={() => setShowCategoryModal(true)} className="p-1 hover:bg-pink-100 rounded">
+              <TagIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setAnonymous((a) => !a)}
+              className={`p-1 hover:bg-pink-100 rounded ${anonymous ? 'text-pink-500' : ''}`}
+            >
+              <UserIcon className="w-5 h-5" />
+            </button>
+            <button className="ml-auto bg-pink-500 hover:bg-pink-600 text-white rounded px-4 transition" onClick={submitPost}>
+              投稿
+            </button>
+            <input type="file" ref={fileInputRef} className="hidden" />
+          </div>
+          {newCategory && (
+            <div className="text-sm mt-1">カテゴリ: {newCategory}</div>
+          )}
         </div>
         {posts.map((p) => (
           <div key={p.id} id={`post-${p.id}`} className="rounded-lg bg-white p-4 shadow mb-4">
@@ -401,11 +434,14 @@ export default function CommunityHome() {
                   />
                   <button
                     className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition"
-                    onClick={() => submitComment(p.id)}
+                onClick={() => submitComment(p.id)}
                   >
                     送信
                   </button>
                 </div>
+              </div>
+              <div className="text-right text-xs text-gray-500 mt-1">
+                {new Date(p.created_at).toLocaleString()}
               </div>
           </div>
         ))}
@@ -417,12 +453,23 @@ export default function CommunityHome() {
               className="rounded p-1 flex-1 bg-white shadow"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ユーザー検索"
+              placeholder="投稿・ユーザー検索"
             />
             <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition" onClick={doSearch}>
               検索
             </button>
           </div>
+          {postResults.length > 0 && (
+            <ul className="text-sm pl-4 list-disc">
+              {postResults.map((p) => (
+                <li key={p.id} className="mt-1">
+                  <Link href={`/community/post/${p.id}`} className="underline text-pink-500">
+                    {p.content.slice(0, 20)}...
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
           {results.length > 0 && (
             <ul className="text-sm pl-4 list-disc">
               {results.map((u) => (
@@ -462,6 +509,47 @@ export default function CommunityHome() {
           targetId={reportTarget.id}
           onClose={() => setReportTarget(null)}
         />
+      )}
+      {showCategoryModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-4 rounded shadow w-60">
+            <h3 className="font-bold mb-2">カテゴリ選択</h3>
+            <select
+              className="border rounded w-full p-1 mb-2"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+            >
+              <option value="">なし</option>
+              <option value="お悩み相談">お悩み相談</option>
+              <option value="コラボ募集">コラボ募集</option>
+              <option value="雑談">雑談</option>
+            </select>
+            <div className="text-right">
+              <button
+                className="bg-pink-500 hover:bg-pink-600 text-white rounded px-3 py-1 text-sm"
+                onClick={() => setShowCategoryModal(false)}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showPollModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-4 rounded shadow w-60 text-center space-y-2">
+            <p>投票機能は準備中です</p>
+            <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-3 py-1 text-sm" onClick={() => setShowPollModal(false)}>閉じる</button>
+          </div>
+        </div>
+      )}
+      {showScheduleModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-4 rounded shadow w-60 text-center space-y-2">
+            <p>予約機能は準備中です</p>
+            <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-3 py-1 text-sm" onClick={() => setShowScheduleModal(false)}>閉じる</button>
+          </div>
+        </div>
       )}
     </div>
   )

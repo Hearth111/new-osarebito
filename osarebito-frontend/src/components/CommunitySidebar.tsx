@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react'
 
 export default function CommunitySidebar() {
   const [showTutorial, setShowTutorial] = useState(false)
+  const [anonMode, setAnonMode] = useState(false)
 
   useEffect(() => {
     const uid = localStorage.getItem('userId') || ''
@@ -25,6 +26,7 @@ export default function CommunitySidebar() {
       .then((data) => {
         setShowTutorial((data.tasks || []).length > 0)
       })
+    setAnonMode(localStorage.getItem('anonymousMode') === '1')
   }, [])
 
   return (
@@ -80,6 +82,21 @@ export default function CommunitySidebar() {
           <span>チュートリアル</span>
         </Link>
       )}
+      <button
+        className="flex items-center gap-2 text-pink-700 hover:text-pink-900"
+        onClick={() => {
+          if (anonMode) {
+            localStorage.removeItem('anonymousMode')
+          } else {
+            localStorage.setItem('anonymousMode', '1')
+          }
+          setAnonMode(!anonMode)
+          location.href = '/community'
+        }}
+      >
+        <UserGroupIcon className="w-5 h-5" />
+        <span>{anonMode ? '通常モード' : '匿名モード'}</span>
+      </button>
     </nav>
   )
 }
