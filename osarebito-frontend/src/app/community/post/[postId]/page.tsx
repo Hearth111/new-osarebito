@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { HeartIcon, ArrowsRightLeftIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
-import ReportModal from '../../../components/ReportModal'
 
 interface Post {
   id: number
