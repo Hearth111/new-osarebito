@@ -22,6 +22,12 @@ interface Post {
   best_answer_id?: number | null
   likes?: string[]
   retweets?: string[]
+  image?: string | null
+}
+
+interface User {
+  user_id: string
+  username: string
 }
 
 interface Comment {
@@ -39,6 +45,11 @@ export default function PostCommentsPage() {
   const [comments, setComments] = useState<Comment[]>([])
   const [commentText, setCommentText] = useState('')
   const [bookmarks, setBookmarks] = useState<number[]>([])
+  const [search, setSearch] = useState('')
+  const [results, setResults] = useState<User[]>([])
+  const [postResults, setPostResults] = useState<Post[]>([])
+  const [recoUsers, setRecoUsers] = useState<User[]>([])
+  const [tags, setTags] = useState<{ name: string; count: number }[]>([])
   const [reportTarget, setReportTarget] = useState<
     | { type: 'post'; id: number }
     | { type: 'comment'; id: number }
@@ -50,8 +61,21 @@ export default function PostCommentsPage() {
       axios.get(`/api/posts/${postId}`),
       axios.get(`/api/posts/${postId}/comments`),
     ])
-    setPost(postRes.data)
+    const anonMode = localStorage.getItem('anonymousMode') === '1'
+    const data = postRes.data
+    if ((anonMode && !data.anonymous) || (!anonMode && data.anonymous)) {
+      setPost(null)
+      setComments([])
+      return
+    }
+    setPost(data)
     setComments(commentRes.data.comments || [])
+    const [u, t] = await Promise.all([
+      axios.get('/api/recommended_users'),
+      axios.get('/api/popular_tags'),
+    ])
+    setRecoUsers(u.data)
+    setTags(t.data)
     const uid = localStorage.getItem('userId') || ''
     if (uid) {
       const res = await axios.get(`/api/users/${uid}/bookmarks`)
@@ -108,25 +132,50 @@ export default function PostCommentsPage() {
     setBookmarks((b) => (marked ? b.filter((id) => id !== postId) : [...b, postId]))
   }
 
-  if (!post) return <p className="p-4">Loading...</p>
+  const openReport = (type: 'post' | 'comment', id: number) => {
+    setReportTarget({ type, id })
+  }
+
+  const doSearch = async () => {
+    if (!search) return
+    if (search.startsWith('#')) {
+      const tag = search.slice(1)
+      const res = await axios.get(`/api/posts/by_tag?tag=${encodeURIComponent(tag)}`)
+      setPostResults(res.data.posts || [])
+      setResults([])
+    } else {
+      const res = await axios.get(`/api/users/search?query=${encodeURIComponent(search)}`)
+      setResults(res.data)
+      setPostResults([])
+    }
+  }
+
+  if (!post)
+    return (
+      <p className="p-4">この投稿は現在のモードでは表示できません。</p>
+    )
 
   const liked = (post.likes || []).includes(localStorage.getItem('userId') || '')
   const rted = (post.retweets || []).includes(localStorage.getItem('userId') || '')
   const marked = bookmarks.includes(postId)
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-4">
-      <Link href="/community" className="underline text-sm">
-        &larr; 戻る
-      </Link>
-      <div className="rounded-lg bg-white p-4 shadow">
-        <div className="text-sm text-gray-600">{post.author_id}</div>
-        {post.category && (
-          <div className="text-xs text-pink-600 mb-1">[{post.category}]</div>
-        )}
-        <p>{post.content}</p>
-        <div className="mt-2 flex gap-4 text-sm items-center">
-          <button className="flex items-center gap-1 underline" onClick={() => handleLike(liked)}>
+    <div className="flex gap-6">
+      <div className="flex-1 max-w-2xl p-4 space-y-4">
+        <Link href="/community" className="underline text-sm">
+          &larr; 戻る
+        </Link>
+        <div className="rounded-lg bg-white p-4 shadow">
+          <div className="text-sm text-gray-600">{post.author_id}</div>
+          {post.category && (
+            <div className="text-xs text-pink-600 mb-1">[{post.category}]</div>
+          )}
+          <p>{post.content}</p>
+          {post.image && (
+            <img src={post.image} alt="post image" className="max-h-60 mt-2" />
+          )}
+          <div className="mt-2 flex gap-4 text-sm items-center">
+            <button className="flex items-center gap-1 underline" onClick={() => handleLike(liked)}>
             {liked ? (
               <HeartIconSolid className="w-4 h-4 text-red-500" />
             ) : (
@@ -148,36 +197,97 @@ export default function PostCommentsPage() {
             通報
           </button>
         </div>
-        <div className="text-right text-xs text-gray-500 mt-1">
-          {new Date(post.created_at).toLocaleString()}
+          <div className="text-right text-xs text-gray-500 mt-1">
+            {new Date(post.created_at).toLocaleString()}
+          </div>
         </div>
-      </div>
-      <div className="space-y-2">
-        {comments.map((c) => (
-          <div key={c.id} className="rounded-lg bg-white p-2 shadow text-sm">
-            <span className="text-gray-600 mr-2">{c.author_id}</span>
-            {c.content}
+        <div className="space-y-2">
+          {comments.map((c) => (
+            <div key={c.id} className="rounded-lg bg-white p-2 shadow text-sm">
+              <span className="text-gray-600 mr-2">{c.author_id}</span>
+              {c.content}
+              <span className="ml-2 text-xs text-gray-500">
+                {new Date(c.created_at).toLocaleString()}
+              </span>
+              <button
+                className="ml-2 text-xs underline"
+                onClick={() => openReport('comment', c.id)}
+              >
+                通報
+              </button>
+            </div>
+          ))}
+          <div className="flex gap-2 mt-2">
+            <input
+              className="rounded flex-1 p-1 text-sm bg-white shadow"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="コメントする"
+            />
             <button
-              className="ml-2 text-xs underline"
-              onClick={() => setReportTarget({ type: 'comment', id: c.id })}
+              className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition"
+              onClick={submitComment}
             >
-              通報
+              送信
             </button>
           </div>
-        ))}
-        <div className="flex gap-2 mt-2">
-          <input
-            className="rounded flex-1 p-1 text-sm bg-white shadow"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="コメントする"
-          />
-          <button
-            className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition"
-            onClick={submitComment}
-          >
-            送信
-          </button>
+        </div>
+      </div>
+      <div className="w-72 space-y-6 ml-auto">
+        <div>
+          <div className="flex gap-2 mb-2">
+            <input
+              className="rounded p-1 flex-1 bg-white shadow"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="投稿・ユーザー検索"
+            />
+            <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition" onClick={doSearch}>
+              検索
+            </button>
+          </div>
+          {postResults.length > 0 && (
+            <ul className="text-sm pl-4 list-disc">
+              {postResults.map((p) => (
+                <li key={p.id} className="mt-1">
+                  <Link href={`/community/post/${p.id}`} className="underline text-pink-500">
+                    {p.content.slice(0, 20)}...
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {results.length > 0 && (
+            <ul className="text-sm pl-4 list-disc">
+              {results.map((u) => (
+                <li key={u.user_id} className="mt-1">
+                  <Link href={`/profile/${u.user_id}`} className="underline text-pink-500">
+                    {u.username || u.user_id}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <h3 className="font-bold mb-2">おすすめユーザー</h3>
+          <ul className="space-y-1">
+            {recoUsers.map((u) => (
+              <li key={u.user_id} className="text-sm">
+                <Link href={`/profile/${u.user_id}`} className="underline text-pink-500">
+                  {u.username}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-bold mb-2">お気に入りタグ</h3>
+          <div className="flex gap-2 flex-wrap text-sm">
+            {tags.map((t) => (
+              <span key={t.name} className="bg-pink-100 px-2 py-1">#{t.name}</span>
+            ))}
+          </div>
         </div>
       </div>
       {reportTarget && (

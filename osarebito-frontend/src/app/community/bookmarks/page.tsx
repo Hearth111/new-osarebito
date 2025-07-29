@@ -17,6 +17,7 @@ interface Post {
   category?: string | null
   likes?: string[]
   retweets?: string[]
+  image?: string | null
 }
 
 export default function CommunityBookmarks() {
@@ -106,6 +107,9 @@ export default function CommunityBookmarks() {
               <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
             )}
             <p>{p.content}</p>
+            {p.image && (
+              <img src={p.image} alt="post image" className="max-h-60 mt-2" />
+            )}
             <div className="mt-2 flex gap-4 text-sm items-center">
               <button className="flex items-center gap-1 underline" onClick={() => handleLike(p.id, liked)}>
                 {liked ? <HeartIconSolid className="w-4 h-4 text-red-500" /> : <HeartIcon className="w-4 h-4" />}

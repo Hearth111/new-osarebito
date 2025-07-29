@@ -55,6 +55,7 @@ async def create_post(post: PostCreate):
         "best_answer_id": None,
         "likes": [],
         "retweets": [],
+        "image": post.image,
         "created_at": datetime.utcnow().isoformat(),
     }
     posts.append(item)
