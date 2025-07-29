@@ -140,11 +140,6 @@ export default function PostCommentsPage() {
           </button>
         </div>
       </div>
-      {reportTarget && (
-        <ReportModal
-          targetType={reportTarget.type}
-          targetId={reportTarget.id}
-          onClose={() => setReportTarget(null)}
         />
       )}
     </div>
