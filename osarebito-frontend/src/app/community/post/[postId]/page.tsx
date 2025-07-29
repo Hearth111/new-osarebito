@@ -136,12 +136,11 @@ export default function PostCommentsPage() {
             placeholder="コメントする"
           />
           <button className="bg-pink-500 hover:bg-pink-600 text-white rounded px-2 transition" onClick={submitComment}>
-            送信
-          </button>
-        </div>
+                      送信
+        </button>
       </div>
-        />
-      )}
     </div>
-  )
+  )}
+</div>
+)
 }
