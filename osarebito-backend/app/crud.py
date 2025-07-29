@@ -11,6 +11,7 @@ from .db import (
     group_messages_table,
     fan_posts_table,
     appeals_table,
+    materials_table,
 )
 
 
@@ -92,3 +93,11 @@ def load_appeals():
 
 def save_appeals(appeals):
     save_table(appeals_table, appeals, "id")
+
+
+def load_materials():
+    return load_table(materials_table)
+
+
+def save_materials(materials):
+    save_table(materials_table, materials, "id")

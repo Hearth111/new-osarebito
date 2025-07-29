@@ -8,6 +8,8 @@ from ..models import (
     FanPostCreate,
     AppealCreate,
     AppealResolveRequest,
+    MaterialCreate,
+    MaterialBoxRequest,
 )
 from ..crud import (
     load_users,
@@ -24,6 +26,8 @@ from ..crud import (
     save_fan_posts,
     load_appeals,
     save_appeals,
+    load_materials,
+    save_materials,
 )
 from ..utils import (
     broadcast,
@@ -287,3 +291,83 @@ def list_appeals():
     appeals = load_appeals()
     appeals.sort(key=lambda x: x["id"], reverse=True)
     return {"appeals": appeals}
+
+
+@router.get("/materials")
+def list_materials(keyword: str | None = None, category: str | None = None):
+    materials = load_materials()
+    if keyword:
+        kw = keyword.lower()
+        materials = [
+            m
+            for m in materials
+            if kw in m.get("title", "").lower()
+            or kw in m.get("description", "").lower()
+        ]
+    if category:
+        materials = [m for m in materials if m.get("category") == category]
+    materials.sort(key=lambda x: x["id"], reverse=True)
+    return {"materials": materials}
+
+
+@router.post("/materials")
+def create_material(mat: MaterialCreate):
+    users = load_users()
+    if not any(u["user_id"] == mat.uploader_id for u in users):
+        raise HTTPException(status_code=404, detail="User not found")
+    materials = load_materials()
+    new_id = max([m["id"] for m in materials], default=0) + 1
+    item = {
+        "id": new_id,
+        "uploader_id": mat.uploader_id,
+        "title": mat.title,
+        "description": mat.description,
+        "category": mat.category,
+        "url": mat.url,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    materials.append(item)
+    save_materials(materials)
+    return item
+
+
+@router.post("/materials/{material_id}/save")
+def save_material_to_box(material_id: int, req: MaterialBoxRequest):
+    materials = load_materials()
+    if not any(m["id"] == material_id for m in materials):
+        raise HTTPException(status_code=404, detail="Material not found")
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == req.user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    box = user.setdefault("material_box", [])
+    if material_id not in box:
+        box.append(material_id)
+        save_users(users)
+    return {"count": len(box)}
+
+
+@router.post("/materials/{material_id}/unsave")
+def unsave_material_from_box(material_id: int, req: MaterialBoxRequest):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == req.user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    box = user.setdefault("material_box", [])
+    if material_id in box:
+        box.remove(material_id)
+        save_users(users)
+    return {"count": len(box)}
+
+
+@router.get("/users/{user_id}/material_box")
+def list_material_box(user_id: str):
+    users = load_users()
+    user = next((u for u in users if u["user_id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    materials = load_materials()
+    ids = set(user.get("material_box", []))
+    result = [m for m in materials if m["id"] in ids]
+    result.sort(key=lambda x: x["id"], reverse=True)
+    return {"materials": result}
