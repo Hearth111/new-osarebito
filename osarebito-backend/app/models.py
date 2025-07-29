@@ -167,3 +167,25 @@ class BestAnswerRequest(BaseModel):
 class AppealResolveRequest(BaseModel):
     action: str
     resolver_id: str
+
+
+class Material(BaseModel):
+    id: int
+    uploader_id: str
+    title: str
+    description: str
+    category: str
+    url: str
+    created_at: str
+
+
+class MaterialCreate(BaseModel):
+    uploader_id: str
+    title: str
+    description: str
+    category: str
+    url: str
+
+
+class MaterialBoxRequest(BaseModel):
+    user_id: str
