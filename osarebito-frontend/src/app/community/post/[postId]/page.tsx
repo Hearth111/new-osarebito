@@ -139,7 +139,6 @@ export default function PostCommentsPage() {
                       送信
         </button>
       </div>
-    </div>
 </div>
 )
 }
