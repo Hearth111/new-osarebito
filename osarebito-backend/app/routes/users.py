@@ -5,6 +5,7 @@ from ..models import (
     LoginInput,
     ProfileUpdate,
     CollabProfileUpdate,
+    CreatorProfileUpdate,
     FollowRequest,
     InterestRequest,
     BlockRequest,
@@ -36,6 +37,7 @@ def register(user: User):
             "created_at": datetime.utcnow().isoformat(),
             "profile": {},
             "collab_profile": {},
+            "creator_profile": {},
             "followers": [],
             "following": [],
             "interested": [],
@@ -288,3 +290,47 @@ def update_collab_profile(user_id: str, profile: CollabProfileUpdate):
             save_users(users)
             return {"message": "updated"}
     raise HTTPException(status_code=404, detail="User not found")
+
+
+@router.get("/users/{user_id}/creator_profile")
+def get_creator_profile(user_id: str, viewer_id: str | None = None):
+    users = load_users()
+    for u in users:
+        if u["user_id"] == user_id:
+            prof = u.get("creator_profile", {})
+            vis = prof.get("visibility", "public")
+            if viewer_id != user_id and vis != "public":
+                return {}
+            return prof
+    raise HTTPException(status_code=404, detail="User not found")
+
+
+@router.put("/users/{user_id}/creator_profile")
+def update_creator_profile(user_id: str, profile: CreatorProfileUpdate):
+    users = load_users()
+    for u in users:
+        if u["user_id"] == user_id:
+            prof = u.get("creator_profile", {})
+            data = profile.dict(exclude_unset=True)
+            prof.update({k: v for k, v in data.items() if v is not None})
+            u["creator_profile"] = prof
+            save_users(users)
+            return {"message": "updated"}
+    raise HTTPException(status_code=404, detail="User not found")
+
+
+@router.get("/creator_profiles/search")
+def search_creator_profiles(keyword: str):
+    users = load_users()
+    kw = keyword.lower()
+    result = []
+    for u in users:
+        prof = u.get("creator_profile", {})
+        if prof.get("visibility", "public") != "public":
+            continue
+        texts = " ".join(prof.get("skills", []) or []) + " " + " ".join(prof.get("equipment", []) or []) + " " + " ".join(prof.get("software", []) or [])
+        if kw in texts.lower():
+            item = remove_sensitive_fields(u)
+            item["creator_profile"] = prof
+            result.append(item)
+    return result

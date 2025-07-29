@@ -38,6 +38,18 @@ class CollabProfileUpdate(BaseModel):
     availability: Optional[str] = None
     visibility: Optional[str] = None
 
+class CreatorProfile(BaseModel):
+    skills: Optional[List[str]] = None
+    equipment: Optional[List[str]] = None
+    software: Optional[List[str]] = None
+    visibility: str = "public"
+
+class CreatorProfileUpdate(BaseModel):
+    skills: Optional[List[str]] = None
+    equipment: Optional[List[str]] = None
+    software: Optional[List[str]] = None
+    visibility: Optional[str] = None
+
 class Post(BaseModel):
     id: int
     author_id: str
