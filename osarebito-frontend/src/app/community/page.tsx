@@ -9,6 +9,7 @@ import {
   ArrowsRightLeftIcon,
   BookmarkIcon,
 } from '@heroicons/react/24/outline'
+import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 
 interface Post {
   id: number
@@ -122,19 +123,24 @@ export default function CommunityHome() {
     const user_id = localStorage.getItem('userId') || ''
     if (!user_id) return
     const url = liked ? `/api/posts/${postId}/unlike` : `/api/posts/${postId}/like`
-    await axios.post(url, { user_id })
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              likes: liked
-                ? (p.likes || []).filter((v) => v !== user_id)
-                : [...(p.likes || []), user_id],
-            }
-          : p,
-      ),
-    )
+    try {
+      await axios.post(url, { user_id })
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id !== postId) return p
+          const list = p.likes || []
+          let newLikes = list
+          if (liked) {
+            newLikes = list.filter((v) => v !== user_id)
+          } else if (!list.includes(user_id)) {
+            newLikes = [...list, user_id]
+          }
+          return { ...p, likes: newLikes }
+        }),
+      )
+    } catch {
+      // ignore
+    }
   }
 
   const handleRetweet = async (postId: number, rted: boolean) => {
@@ -315,7 +321,13 @@ export default function CommunityHome() {
                   )
                 }
               >
-                <HeartIcon className="w-4 h-4" />
+                {(
+                  p.likes || []
+                ).includes(localStorage.getItem('userId') || '') ? (
+                  <HeartIconSolid className="w-4 h-4 text-red-500" />
+                ) : (
+                  <HeartIcon className="w-4 h-4" />
+                )}
                 {p.likes ? p.likes.length : 0}
               </button>
               <button
