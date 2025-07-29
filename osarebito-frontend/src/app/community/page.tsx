@@ -204,16 +204,36 @@ export default function CommunityHome() {
   const reportPost = async (postId: number) => {
     const reporter_id = localStorage.getItem('userId') || ''
     if (!reporter_id) return
-    const reason = window.prompt('通報理由を入力してください') || ''
-    await axios.post(`/api/reports/post/${postId}`, { reporter_id, reason })
+    const cat = window.prompt(
+      '通報カテゴリを番号で選択してください:\n1. スパム・広告\n2. 迷惑行為\n3. 不適切なコンテンツ\n4. その他',
+    )
+    if (!cat) return
+    const categories = ['スパム・広告', '迷惑行為', '不適切なコンテンツ', 'その他']
+    const category = categories[Number(cat) - 1] || 'その他'
+    const reason = window.prompt('詳細な通報内容を入力してください(任意)') || ''
+    await axios.post(`/api/reports/post/${postId}`, {
+      reporter_id,
+      category,
+      reason,
+    })
     alert('通報しました')
   }
 
   const reportComment = async (commentId: number) => {
     const reporter_id = localStorage.getItem('userId') || ''
     if (!reporter_id) return
-    const reason = window.prompt('通報理由を入力してください') || ''
-    await axios.post(`/api/reports/comment/${commentId}`, { reporter_id, reason })
+    const cat = window.prompt(
+      '通報カテゴリを番号で選択してください:\n1. スパム・広告\n2. 迷惑行為\n3. 不適切なコンテンツ\n4. その他',
+    )
+    if (!cat) return
+    const categories = ['スパム・広告', '迷惑行為', '不適切なコンテンツ', 'その他']
+    const category = categories[Number(cat) - 1] || 'その他'
+    const reason = window.prompt('詳細な通報内容を入力してください(任意)') || ''
+    await axios.post(`/api/reports/comment/${commentId}`, {
+      reporter_id,
+      category,
+      reason,
+    })
     alert('通報しました')
   }
 
