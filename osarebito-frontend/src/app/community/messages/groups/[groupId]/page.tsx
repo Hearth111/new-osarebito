@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useParams } from 'next/navigation'
-import { groupMessagesUrl } from '@/routes'
+import { groupMessagesUrl, updatesWsUrl } from '@/routes'
 
 interface Message { id: number; group_id: number; sender_id: string; content: string; created_at: string }
 
@@ -20,7 +20,7 @@ export default function GroupChat() {
 
   useEffect(() => {
     load()
-    const ws = new WebSocket(groupMessagesUrl(gid).replace(/^http/, 'ws').replace('/groups', '/ws/updates'))
+    const ws = new WebSocket(updatesWsUrl)
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data)
