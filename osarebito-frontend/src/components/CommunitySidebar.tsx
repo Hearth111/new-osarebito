@@ -8,6 +8,8 @@ import {
   BriefcaseIcon,
   SparklesIcon,
   UserGroupIcon,
+  UserIcon,
+  EyeSlashIcon,
   BookmarkIcon,
   PaintBrushIcon,
   PhotoIcon,
@@ -57,7 +59,7 @@ export default function CommunitySidebar() {
         <span>ブックマーク</span>
       </Link>
       <Link href="/community/mypage" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
-        <UserGroupIcon className="w-5 h-5" />
+        <UserIcon className="w-5 h-5" />
         <span>マイページ</span>
       </Link>
       <Link href="/community/jobs" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
@@ -94,7 +96,7 @@ export default function CommunitySidebar() {
           location.href = '/community'
         }}
       >
-        <UserGroupIcon className="w-5 h-5" />
+        <EyeSlashIcon className="w-5 h-5" />
         <span>{anonMode ? '通常モード' : '匿名モード'}</span>
       </button>
     </nav>
