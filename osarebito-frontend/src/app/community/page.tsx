@@ -12,7 +12,6 @@ import {
   ChartBarIcon,
   CalendarDaysIcon,
   TagIcon,
-  UserIcon,
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 import ReportModal from '../../components/ReportModal'
@@ -55,7 +54,6 @@ export default function CommunityHome() {
   const [tags, setTags] = useState<{ name: string; count: number }[]>([])
   const [newPost, setNewPost] = useState('')
   const [newCategory, setNewCategory] = useState('')
-  const [anonymous, setAnonymous] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showPollModal, setShowPollModal] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
@@ -138,12 +136,11 @@ export default function CommunityHome() {
       author_id,
       content: newPost,
       category: newCategory || null,
-      anonymous,
+      anonymous: localStorage.getItem('anonymousMode') === '1',
       image: newImage,
     })
     setNewPost('')
     setNewCategory('')
-    setAnonymous(false)
     setNewImage(null)
     fetchPosts(feed)
   }
@@ -318,12 +315,6 @@ export default function CommunityHome() {
             </button>
             <button onClick={() => setShowCategoryModal(true)} className="p-1 hover:bg-pink-100 rounded">
               <TagIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setAnonymous((a) => !a)}
-              className={`p-1 hover:bg-pink-100 rounded ${anonymous ? 'text-pink-500' : ''}`}
-            >
-              <UserIcon className="w-5 h-5" />
             </button>
             <button className="ml-auto bg-pink-500 hover:bg-pink-600 text-white rounded px-4 transition" onClick={submitPost}>
               投稿

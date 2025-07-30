@@ -12,6 +12,7 @@ interface Post {
   likes?: string[]
   retweets?: string[]
   image?: string | null
+  anonymous?: boolean
 }
 
 export default function TagPostsPage() {
@@ -21,7 +22,9 @@ export default function TagPostsPage() {
 
   useEffect(() => {
     axios.get(`/api/posts/tag/${encodeURIComponent(tag)}`).then((res) => {
-      setPosts(res.data.posts || [])
+      const list = res.data.posts || []
+      const anon = localStorage.getItem('anonymousMode') === '1'
+      setPosts(list.filter((p: Post) => (anon ? p.anonymous : !p.anonymous)))
     })
   }, [tag])
 

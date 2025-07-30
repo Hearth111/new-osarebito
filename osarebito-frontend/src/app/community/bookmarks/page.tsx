@@ -18,6 +18,7 @@ interface Post {
   likes?: string[]
   retweets?: string[]
   image?: string | null
+  anonymous?: boolean
 }
 
 export default function CommunityBookmarks() {
@@ -34,8 +35,10 @@ export default function CommunityBookmarks() {
     if (!uid) return
     axios.get(`/api/users/${uid}/bookmarks`).then((res) => {
       const list = res.data.posts || []
-      setPosts(list)
-      setBookmarks(list.map((p: Post) => p.id))
+      const anon = localStorage.getItem('anonymousMode') === '1'
+      const filtered = list.filter((p: Post) => (anon ? p.anonymous : !p.anonymous))
+      setPosts(filtered)
+      setBookmarks(filtered.map((p: Post) => p.id))
     })
   }, [])
 
