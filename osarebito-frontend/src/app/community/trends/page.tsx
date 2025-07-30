@@ -16,6 +16,7 @@ interface Post {
   likes?: string[]
   retweets?: string[]
   image?: string | null
+  anonymous?: boolean
 }
 
 export default function CommunityTrends() {
@@ -24,7 +25,11 @@ export default function CommunityTrends() {
 
   useEffect(() => {
     axios.get('/api/popular_tags').then((res) => setTags(res.data || []))
-    axios.get(trendingPostsUrl).then((res) => setPosts(res.data.posts || []))
+    axios.get(trendingPostsUrl).then((res) => {
+      const list = res.data.posts || []
+      const anon = localStorage.getItem('anonymousMode') === '1'
+      setPosts(list.filter((p: Post) => (anon ? p.anonymous : !p.anonymous)))
+    })
   }, [])
 
   return (

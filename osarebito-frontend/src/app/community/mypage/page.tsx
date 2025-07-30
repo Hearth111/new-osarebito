@@ -10,6 +10,7 @@ interface Post {
   created_at: string
   category?: string | null
   image?: string | null
+  anonymous?: boolean
 }
 
 export default function CommunityMyPage() {
@@ -19,11 +20,14 @@ export default function CommunityMyPage() {
   useEffect(() => {
     const uid = localStorage.getItem('userId') || ''
     if (!uid) return
+    const anon = localStorage.getItem('anonymousMode') === '1'
     axios.get(`/api/posts?feed=user&user_id=${uid}`).then((res) => {
-      setPosts(res.data.posts || [])
+      const list = res.data.posts || []
+      setPosts(list.filter((p: Post) => (anon ? p.anonymous : !p.anonymous)))
     })
     axios.get(`/api/users/${uid}/retweets`).then((res) => {
-      setRetweets(res.data.posts || [])
+      const list = res.data.posts || []
+      setRetweets(list.filter((p: Post) => (anon ? p.anonymous : !p.anonymous)))
     })
   }, [])
 
