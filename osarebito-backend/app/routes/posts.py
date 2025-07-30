@@ -29,7 +29,7 @@ from ..utils import (
     FIRST_COMMENT_ACHIEVEMENT,
     ROLE_REPORT_POINTS,
     REPORT_CATEGORIES,
-    broadcast,
+    schedule_broadcast,
     is_semibanned,
 )
 
@@ -65,7 +65,7 @@ async def create_post(post: PostCreate):
     if first_post:
         add_achievement(user, FIRST_POST_ACHIEVEMENT)
         save_users(users)
-    await broadcast({"type": "new_post", "post": item})
+    schedule_broadcast({"type": "new_post", "post": item})
     return item
 
 
@@ -174,7 +174,7 @@ async def like_post(post_id: int, data: LikeRequest):
     if data.user_id not in likes:
         likes.append(data.user_id)
         update_post(post)
-        await broadcast({"type": "like", "post_id": post_id, "likes": likes})
+        schedule_broadcast({"type": "like", "post_id": post_id, "likes": likes})
     return {"likes": len(likes)}
 
 
@@ -187,7 +187,7 @@ async def unlike_post(post_id: int, data: LikeRequest):
     if data.user_id in likes:
         likes.remove(data.user_id)
         update_post(post)
-        await broadcast({"type": "like", "post_id": post_id, "likes": likes})
+        schedule_broadcast({"type": "like", "post_id": post_id, "likes": likes})
     return {"likes": len(likes)}
 
 
@@ -200,7 +200,7 @@ async def retweet_post(post_id: int, data: RetweetRequest):
     if data.user_id not in retweets:
         retweets.append(data.user_id)
         update_post(post)
-        await broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
+        schedule_broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
     return {"retweets": len(retweets)}
 
 
@@ -213,7 +213,7 @@ async def unretweet_post(post_id: int, data: RetweetRequest):
     if data.user_id in retweets:
         retweets.remove(data.user_id)
         update_post(post)
-        await broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
+        schedule_broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
     return {"retweets": len(retweets)}
 
 
