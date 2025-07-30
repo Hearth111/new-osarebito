@@ -13,13 +13,26 @@ interface Post {
   anonymous?: boolean
 }
 
+interface UserProfile {
+  profile_image?: string
+  bio?: string
+}
+
+interface User {
+  user_id: string
+  username?: string
+  profile?: UserProfile
+}
+
 export default function CommunityMyPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [retweets, setRetweets] = useState<Post[]>([])
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     const uid = localStorage.getItem('userId') || ''
     if (!uid) return
+    axios.get(`/api/users/${uid}`).then((res) => setUser(res.data))
     const anon = localStorage.getItem('anonymousMode') === '1'
     axios.get(`/api/posts?feed=user&user_id=${uid}`).then((res) => {
       const list = res.data.posts || []
@@ -45,7 +58,24 @@ export default function CommunityMyPage() {
 
   return (
     <div className="p-4 space-y-6">
-      <h1 className="text-xl font-bold">マイページ</h1>
+      {user && (
+        <div className="mb-6">
+          <div className="h-32 bg-pink-200 rounded-t-lg relative" />
+          <div className="px-4 -mt-10 flex items-end gap-4">
+            {user.profile?.profile_image && (
+              <img
+                src={user.profile.profile_image}
+                alt="icon"
+                className="w-20 h-20 rounded-full border-2 border-white"
+              />
+            )}
+            <div>
+              <h1 className="text-xl font-bold">{user.username || user.user_id}</h1>
+              {user.profile?.bio && <p className="text-sm mt-1">{user.profile.bio}</p>}
+            </div>
+          </div>
+        </div>
+      )}
       <section>
         <h2 className="font-semibold mb-2">自分の投稿</h2>
         {posts.map((p) => (
