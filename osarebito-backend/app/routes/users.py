@@ -224,6 +224,17 @@ def list_following(user_id: str):
     return result
 
 
+@router.get("/users/{user_id}/blocks")
+def list_blocks(user_id: str):
+    users = load_users()
+    target = next((u for u in users if u["user_id"] == user_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    block_ids = target.get("blocks", [])
+    result = [remove_sensitive_fields(u) for u in users if u["user_id"] in block_ids]
+    return result
+
+
 @router.get("/users/{user_id}/bookmarks")
 def list_bookmarks(user_id: str):
     users = load_users()
