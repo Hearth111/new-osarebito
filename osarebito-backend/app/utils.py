@@ -1,6 +1,7 @@
 from typing import Set
 from fastapi import WebSocket, WebSocketDisconnect
 from datetime import datetime
+import asyncio
 
 # WebSocket connection management
 connections: Set[WebSocket] = set()
@@ -8,13 +9,20 @@ connections: Set[WebSocket] = set()
 async def broadcast(message: dict) -> None:
     """Send a JSON message to all connected WebSocket clients."""
     dead: list[WebSocket] = []
-    for ws in list(connections):
-        try:
-            await ws.send_json(message)
-        except Exception:
+    tasks = []
+    sockets = list(connections)
+    for ws in sockets:
+        tasks.append(ws.send_json(message))
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for ws, res in zip(sockets, results):
+        if isinstance(res, Exception):
             dead.append(ws)
     for ws in dead:
         connections.discard(ws)
+
+def schedule_broadcast(message: dict) -> None:
+    """Schedule broadcast asynchronously without blocking the caller."""
+    asyncio.create_task(broadcast(message))
 
 ALLOWED_ROLES = {"推され人", "推し人", "お仕事人"}
 ROLE_REPORT_POINTS = {"推され人": 1, "推し人": 1, "お仕事人": 1}

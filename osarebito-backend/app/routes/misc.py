@@ -42,7 +42,7 @@ from ..crud import (
     save_approval_calendars,
 )
 from ..utils import (
-    broadcast,
+    schedule_broadcast,
     TUTORIAL_TASKS,
     is_semibanned,
     generate_schedule_image,
@@ -81,7 +81,7 @@ async def send_message(msg: MessageCreate):
             notes.append({"type": "message", "from": msg.sender_id, "message_id": new_id, "created_at": item["created_at"]})
             break
     save_users(users)
-    await broadcast({"type": "new_message", "message": item})
+    schedule_broadcast({"type": "new_message", "message": item})
     return item
 
 
@@ -185,7 +185,7 @@ async def send_group_message(group_id: int, msg: GroupMessageCreate):
     }
     messages.append(item)
     save_group_messages(messages)
-    await broadcast({"type": "group_message", "group_id": group_id, "message": item})
+    schedule_broadcast({"type": "group_message", "group_id": group_id, "message": item})
     return item
 
 
@@ -214,7 +214,7 @@ async def create_job(job: JobPostCreate):
     }
     jobs.append(item)
     save_jobs(jobs)
-    await broadcast({"type": "new_job", "job": item})
+    schedule_broadcast({"type": "new_job", "job": item})
     return item
 
 
@@ -413,7 +413,7 @@ async def create_poll(poll: PollCreate):
     }
     polls.append(item)
     save_polls(polls)
-    await broadcast({"type": "new_poll", "poll": item})
+    schedule_broadcast({"type": "new_poll", "poll": item})
     return item
 
 
@@ -443,7 +443,7 @@ async def vote_poll(poll_id: int, req: PollVoteRequest):
     poll["votes"][req.option].append(req.user_id)
     save_polls(polls)
     counts = [len(v) for v in poll["votes"]]
-    await broadcast({"type": "vote", "poll_id": poll_id, "counts": counts})
+    schedule_broadcast({"type": "vote", "poll_id": poll_id, "counts": counts})
     return {"counts": counts}
 
 
