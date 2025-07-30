@@ -14,6 +14,7 @@ export const mutualFollowersUrl = (userId: string, myId: string) =>
   `${BACKEND_URL}/users/${userId}/mutual_followers?my_id=${myId}`
 export const followersUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/followers`
 export const followingUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/following`
+export const blocksUrl = (userId: string) => `${BACKEND_URL}/users/${userId}/blocks`
 export const postsUrl = (
   feed: string,
   userId?: string,

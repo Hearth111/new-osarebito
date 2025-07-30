@@ -13,6 +13,7 @@ import {
   BookmarkIcon,
   PaintBrushIcon,
   PhotoIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
 
@@ -77,6 +78,10 @@ export default function CommunitySidebar() {
       <Link href="/community/achievements" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
         <SparklesIcon className="w-5 h-5" />
         <span>実績</span>
+      </Link>
+      <Link href="/community/settings" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
+        <Cog6ToothIcon className="w-5 h-5" />
+        <span>設定</span>
       </Link>
       {showTutorial && (
         <Link href="/community/tutorial" className="flex items-center gap-2 text-pink-700 hover:text-pink-900">
