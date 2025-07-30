@@ -1,6 +1,8 @@
 from .db import (
     load_table,
     save_table,
+    get_item,
+    update_item,
     users_table,
     posts_table,
     comments_table,
@@ -32,6 +34,14 @@ def load_posts():
 
 def save_posts(posts):
     save_table(posts_table, posts, "id")
+
+
+def get_post(post_id: int):
+    return get_item(posts_table, "id", post_id)
+
+
+def update_post(post: dict):
+    update_item(posts_table, "id", post["id"], post)
 
 
 def load_comments():

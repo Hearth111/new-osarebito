@@ -15,6 +15,8 @@ from ..crud import (
     save_users,
     load_posts,
     save_posts,
+    get_post,
+    update_post,
     load_comments,
     save_comments,
     load_reports,
@@ -165,56 +167,52 @@ def posts_by_tag(tag: str):
 
 @router.post("/posts/{post_id}/like")
 async def like_post(post_id: int, data: LikeRequest):
-    posts = load_posts()
-    post = next((p for p in posts if p["id"] == post_id), None)
+    post = get_post(post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     likes = post.setdefault("likes", [])
     if data.user_id not in likes:
         likes.append(data.user_id)
-        save_posts(posts)
+        update_post(post)
         await broadcast({"type": "like", "post_id": post_id, "likes": likes})
     return {"likes": len(likes)}
 
 
 @router.post("/posts/{post_id}/unlike")
 async def unlike_post(post_id: int, data: LikeRequest):
-    posts = load_posts()
-    post = next((p for p in posts if p["id"] == post_id), None)
+    post = get_post(post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     likes = post.setdefault("likes", [])
     if data.user_id in likes:
         likes.remove(data.user_id)
-        save_posts(posts)
+        update_post(post)
         await broadcast({"type": "like", "post_id": post_id, "likes": likes})
     return {"likes": len(likes)}
 
 
 @router.post("/posts/{post_id}/retweet")
 async def retweet_post(post_id: int, data: RetweetRequest):
-    posts = load_posts()
-    post = next((p for p in posts if p["id"] == post_id), None)
+    post = get_post(post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     retweets = post.setdefault("retweets", [])
     if data.user_id not in retweets:
         retweets.append(data.user_id)
-        save_posts(posts)
+        update_post(post)
         await broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
     return {"retweets": len(retweets)}
 
 
 @router.post("/posts/{post_id}/unretweet")
 async def unretweet_post(post_id: int, data: RetweetRequest):
-    posts = load_posts()
-    post = next((p for p in posts if p["id"] == post_id), None)
+    post = get_post(post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     retweets = post.setdefault("retweets", [])
     if data.user_id in retweets:
         retweets.remove(data.user_id)
-        save_posts(posts)
+        update_post(post)
         await broadcast({"type": "retweet", "post_id": post_id, "retweets": retweets})
     return {"retweets": len(retweets)}
 
