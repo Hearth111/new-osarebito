@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 import ReportModal from '@/components/ReportModal'
+import PostCard from '@/components/PostCard'
 
 interface Post {
   id: number
@@ -104,32 +105,32 @@ export default function CommunityBookmarks() {
         const rted = (p.retweets || []).includes(localStorage.getItem('userId') || '')
         const marked = bookmarks.includes(p.id)
         return (
-          <div key={p.id} className="border rounded-lg bg-white p-4 shadow mb-3">
-            <div className="text-sm text-gray-600">{p.author_id}</div>
-            {p.category && (
-              <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
-            )}
-            <p>{p.content}</p>
-            {p.image && (
-              <img src={p.image} alt="post image" className="max-h-60 mt-2" />
-            )}
-            <div className="mt-2 flex gap-4 text-sm items-center">
-              <button className="flex items-center gap-1 underline" onClick={() => handleLike(p.id, liked)}>
-                {liked ? <HeartIconSolid className="w-4 h-4 text-red-500" /> : <HeartIcon className="w-4 h-4" />}
-                {p.likes ? p.likes.length : 0}
-              </button>
-              <button className="flex items-center gap-1 underline" onClick={() => handleRetweet(p.id, rted)}>
-                <ArrowsRightLeftIcon className={`w-4 h-4 ${rted ? 'text-blue-500' : ''}`} />
-                {p.retweets ? p.retweets.length : 0}
-              </button>
-              <button className="flex items-center gap-1 underline" onClick={() => handleBookmark(p.id, marked)}>
-                <BookmarkIcon className={`w-4 h-4 ${marked ? 'text-green-500' : ''}`} />
-              </button>
-              <button className="underline text-xs" onClick={() => openReport(p.id)}>
-                通報
-              </button>
-            </div>
-          </div>
+          <PostCard
+            key={p.id}
+            author={p.author_id}
+            category={p.category}
+            content={p.content}
+            image={p.image}
+            createdAt={p.created_at}
+            actions={
+              <>
+                <button className="flex items-center gap-1 underline" onClick={() => handleLike(p.id, liked)}>
+                  {liked ? <HeartIconSolid className="w-4 h-4 text-red-500" /> : <HeartIcon className="w-4 h-4" />}
+                  {p.likes ? p.likes.length : 0}
+                </button>
+                <button className="flex items-center gap-1 underline" onClick={() => handleRetweet(p.id, rted)}>
+                  <ArrowsRightLeftIcon className={`w-4 h-4 ${rted ? 'text-blue-500' : ''}`} />
+                  {p.retweets ? p.retweets.length : 0}
+                </button>
+                <button className="flex items-center gap-1 underline" onClick={() => handleBookmark(p.id, marked)}>
+                  <BookmarkIcon className={`w-4 h-4 ${marked ? 'text-green-500' : ''}`} />
+                </button>
+                <button className="underline text-xs" onClick={() => openReport(p.id)}>
+                  通報
+                </button>
+              </>
+            }
+          />
         )
       })}
       {posts.length === 0 && <p>ブックマークはありません。</p>}

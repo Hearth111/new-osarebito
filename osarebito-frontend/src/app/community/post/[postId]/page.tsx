@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
 import ReportModal from '@/components/ReportModal'
+import PostCard from '@/components/PostCard'
 
 interface Post {
   id: number
@@ -165,57 +166,49 @@ export default function PostCommentsPage() {
         <Link href="/community" className="underline text-sm">
           &larr; 戻る
         </Link>
-        <div className="rounded-lg bg-white p-4 shadow">
-          <div className="text-sm text-gray-600">{post.author_id}</div>
-          {post.category && (
-            <div className="text-xs text-pink-600 mb-1">[{post.category}]</div>
-          )}
-          <p>{post.content}</p>
-          {post.image && (
-            <img src={post.image} alt="post image" className="max-h-60 mt-2" />
-          )}
-          <div className="mt-2 flex gap-4 text-sm items-center">
-            <button className="flex items-center gap-1 underline" onClick={() => handleLike(liked)}>
-            {liked ? (
-              <HeartIconSolid className="w-4 h-4 text-red-500" />
-            ) : (
-              <HeartIcon className="w-4 h-4" />
-            )}
-            {post.likes ? post.likes.length : 0}
-          </button>
-          <button className="flex items-center gap-1 underline" onClick={() => handleRetweet(rted)}>
-            <ArrowsRightLeftIcon className={`w-4 h-4 ${rted ? 'text-blue-500' : ''}`} />
-            {post.retweets ? post.retweets.length : 0}
-          </button>
-          <button className="flex items-center gap-1 underline" onClick={() => handleBookmark(marked)}>
-            <BookmarkIcon className={`w-4 h-4 ${marked ? 'text-green-500' : ''}`} />
-          </button>
-          <button
-            className="underline text-sm"
-            onClick={() => setReportTarget({ type: 'post', id: postId })}
-          >
-            通報
-          </button>
-        </div>
-          <div className="text-right text-xs text-gray-500 mt-1">
-            {new Date(post.created_at).toLocaleString()}
-          </div>
-        </div>
-        <div className="space-y-2">
-          {comments.map((c) => (
-            <div key={c.id} className="rounded-lg bg-white p-2 shadow text-sm">
-              <span className="text-gray-600 mr-2">{c.author_id}</span>
-              {c.content}
-              <span className="ml-2 text-xs text-gray-500">
-                {new Date(c.created_at).toLocaleString()}
-              </span>
-              <button
-                className="ml-2 text-xs underline"
-                onClick={() => openReport('comment', c.id)}
-              >
+        <PostCard
+          author={post.author_id}
+          category={post.category}
+          content={post.content}
+          image={post.image}
+          createdAt={post.created_at}
+          actions={
+            <>
+              <button className="flex items-center gap-1 underline" onClick={() => handleLike(liked)}>
+                {liked ? (
+                  <HeartIconSolid className="w-4 h-4 text-red-500" />
+                ) : (
+                  <HeartIcon className="w-4 h-4" />
+                )}
+                {post.likes ? post.likes.length : 0}
+              </button>
+              <button className="flex items-center gap-1 underline" onClick={() => handleRetweet(rted)}>
+                <ArrowsRightLeftIcon className={`w-4 h-4 ${rted ? 'text-blue-500' : ''}`} />
+                {post.retweets ? post.retweets.length : 0}
+              </button>
+              <button className="flex items-center gap-1 underline" onClick={() => handleBookmark(marked)}>
+                <BookmarkIcon className={`w-4 h-4 ${marked ? 'text-green-500' : ''}`} />
+              </button>
+              <button className="underline text-sm" onClick={() => setReportTarget({ type: 'post', id: postId })}>
                 通報
               </button>
-            </div>
+            </>
+          }
+        />
+        <div className="space-y-2">
+          {comments.map((c) => (
+              <PostCard
+                key={c.id}
+                author={c.author_id}
+                content={c.content}
+                createdAt={c.created_at}
+                compact
+                actions={
+                  <button className="ml-2 text-xs underline" onClick={() => openReport('comment', c.id)}>
+                    通報
+                  </button>
+                }
+              />
           ))}
           <div className="flex gap-2 mt-2">
             <input
