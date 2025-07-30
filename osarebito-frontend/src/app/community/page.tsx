@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
+import PostCard from '@/components/PostCard'
 import { updatesWsUrl, bestAnswerUrl } from '@/routes'
 import {
   HeartIcon,
@@ -340,15 +341,66 @@ export default function CommunityHome() {
           )}
         </div>
         {posts.map((p) => (
-          <div key={p.id} id={`post-${p.id}`} className="rounded-lg bg-white p-4 shadow mb-4">
-            <div className="text-sm text-gray-600">{p.author_id}</div>
-            {p.category && (
-              <div className="text-xs text-pink-600 mb-1">[{p.category}]</div>
-            )}
-            <p>{p.content}</p>
-            {p.image && (
-              <img src={p.image} alt="post image" className="max-h-60 mt-2" />
-            )}
+          <PostCard
+            key={p.id}
+            author={p.author_id}
+            category={p.category}
+            content={p.content}
+            image={p.image}
+            createdAt={p.created_at}
+            actions={
+              <>
+                <button
+                  className="flex items-center gap-1 underline"
+                  onClick={() =>
+                    handleLike(
+                      p.id,
+                      (p.likes || []).includes(localStorage.getItem('userId') || '')
+                    )
+                  }
+                >
+                  {(p.likes || []).includes(localStorage.getItem('userId') || '') ? (
+                    <HeartIconSolid className="w-4 h-4 text-red-500" />
+                  ) : (
+                    <HeartIcon className="w-4 h-4" />
+                  )}
+                  {p.likes ? p.likes.length : 0}
+                </button>
+                <Link
+                  href={`/community/post/${p.id}`}
+                  className="flex items-center gap-1 underline"
+                >
+                  <ChatBubbleLeftIcon className="w-4 h-4" />
+                  {comments[p.id]?.length || 0}
+                </Link>
+                <button
+                  className="flex items-center gap-1 underline"
+                  onClick={() =>
+                    handleRetweet(
+                      p.id,
+                      (p.retweets || []).includes(localStorage.getItem('userId') || '')
+                    )
+                  }
+                >
+                  <ArrowsRightLeftIcon
+                    className={`w-4 h-4 ${(p.retweets || []).includes(localStorage.getItem('userId') || '') ? 'text-blue-500' : ''}`}
+                  />
+                  {p.retweets ? p.retweets.length : 0}
+                </button>
+                <button
+                  className="flex items-center gap-1 underline"
+                  onClick={() => handleBookmark(p.id, bookmarks.includes(p.id))}
+                >
+                  <BookmarkIcon
+                    className={`w-4 h-4 ${bookmarks.includes(p.id) ? 'text-green-500' : ''}`}
+                  />
+                </button>
+                <button className="underline" onClick={() => openReport('post', p.id)}>
+                  通報
+                </button>
+              </>
+            }
+          >
             {p.tags && p.tags.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-2 text-sm text-pink-600">
                 {p.tags.map((t) => (
@@ -356,69 +408,7 @@ export default function CommunityHome() {
                 ))}
               </div>
             )}
-            <div className="mt-2 flex gap-4 text-sm items-center">
-              <button
-                className="flex items-center gap-1 underline"
-                onClick={() =>
-                  handleLike(
-                    p.id,
-                    (p.likes || []).includes(
-                      localStorage.getItem('userId') || '',
-                    ),
-                  )
-                }
-              >
-                {(
-                  p.likes || []
-                ).includes(localStorage.getItem('userId') || '') ? (
-                  <HeartIconSolid className="w-4 h-4 text-red-500" />
-                ) : (
-                  <HeartIcon className="w-4 h-4" />
-                )}
-                {p.likes ? p.likes.length : 0}
-              </button>
-              <Link
-                href={`/community/post/${p.id}`}
-                className="flex items-center gap-1 underline"
-              >
-                <ChatBubbleLeftIcon className="w-4 h-4" />
-                {comments[p.id]?.length || 0}
-              </Link>
-              <button
-                className="flex items-center gap-1 underline"
-                onClick={() =>
-                  handleRetweet(
-                    p.id,
-                    (p.retweets || []).includes(
-                      localStorage.getItem('userId') || '',
-                    ),
-                  )
-                }
-              >
-                <ArrowsRightLeftIcon
-                  className={`w-4 h-4 ${(
-                    p.retweets || []
-                  ).includes(localStorage.getItem('userId') || '') ? 'text-blue-500' : ''}`}
-                />
-                {p.retweets ? p.retweets.length : 0}
-              </button>
-              <button
-                className="flex items-center gap-1 underline"
-                onClick={() => handleBookmark(p.id, bookmarks.includes(p.id))}
-              >
-                <BookmarkIcon
-                  className={`w-4 h-4 ${bookmarks.includes(p.id) ? 'text-green-500' : ''}`}
-                />
-              </button>
-              <button className="underline" onClick={() => openReport('post', p.id)}>
-                通報
-              </button>
-            </div>
-            {/* comments hidden in feed */}
-              <div className="text-right text-xs text-gray-500 mt-1">
-                {new Date(p.created_at).toLocaleString()}
-              </div>
-          </div>
+          </PostCard>
         ))}
       </div>
       <div className="w-72 space-y-6 ml-auto">
