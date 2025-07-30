@@ -1,5 +1,17 @@
 import os
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, JSON, select, insert, delete
+from sqlalchemy import (
+    create_engine,
+    MetaData,
+    Table,
+    Column,
+    Integer,
+    String,
+    JSON,
+    select,
+    insert,
+    delete,
+    update,
+)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///osarebito.db")
 engine = create_engine(DATABASE_URL)
@@ -117,4 +129,19 @@ def save_table(table, items, key):
         records = [{key: item[key], "data": item} for item in items]
         if records:
             conn.execute(insert(table), records)
+
+
+def get_item(table, key_field, key_value):
+    """Return a single item from a table by key or None."""
+    stmt = select(table.c.data).where(table.c[key_field] == key_value)
+    with engine.connect() as conn:
+        row = conn.execute(stmt).fetchone()
+        return row.data if row else None
+
+
+def update_item(table, key_field, key_value, item):
+    """Update a single item in a table."""
+    stmt = update(table).where(table.c[key_field] == key_value).values(data=item)
+    with engine.begin() as conn:
+        conn.execute(stmt)
 
