@@ -1,4 +1,3 @@
-import os
 from sqlalchemy import (
     create_engine,
     MetaData,
@@ -12,8 +11,9 @@ from sqlalchemy import (
     delete,
     update,
 )
+from .config import settings
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///osarebito.db")
+DATABASE_URL = settings.database_url
 engine = create_engine(DATABASE_URL)
 metadata = MetaData()
 
